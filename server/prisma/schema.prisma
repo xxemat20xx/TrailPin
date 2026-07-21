@@ -12,13 +12,40 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  name        String?
-  password    String?  // null for Google OAuth users
-  avatar      String?
-  googleId    String?  @unique
-  isVerified  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String  @id @default(uuid())
+  email      String  @unique
+  name       String?
+  password   String? // null for Google OAuth users
+  avatar     String?
+  googleId   String? @unique
+  isVerified Boolean @default(false)
+
+  // Add this
+  destinations Destination[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Destination {
+  id        String   @id @default(uuid())
+  name      String
+  latitude  Float
+  longitude Float
+  address   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos    Photo[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Photo {
+  id            String      @id @default(uuid())
+  url           String
+  public_id     String?
+  caption       String?
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
 }

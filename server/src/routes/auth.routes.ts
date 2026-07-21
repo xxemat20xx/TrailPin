@@ -14,7 +14,7 @@ const router = Router();
 
 
 router.post('/register', register);
-router.get('/verify-email', verifyEmail); //get because its a simple click to verify
+router.get('/verify-email', verifyEmail); //get because its a simple click to 
 router.post('/login', login);
 
 // google
@@ -23,6 +23,6 @@ router.get('/google/callback', googleCallback);
 
 // authenticated routes
 router.get('/me', authenticate, getMe);
-router.post('/logout', logout);
+router.post('/logout', authenticate, logout);
 
 export default router;

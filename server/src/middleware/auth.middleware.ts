@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { verifyToken } from '../utils/jwt';
 
 declare global {
@@ -10,18 +10,22 @@ declare global {
     }
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate: RequestHandler = (req, res, next) => {
     const token = req.cookies?.token;
+
     if (!token) {
-        return res.status(401).json({ error: 'Not authenticated' });
+        res.status(401).json({ error: "Not authenticated" });
+        return;
     }
 
     try {
         const decoded = verifyToken(token);
+
         req.userId = decoded.userId;
         req.userEmail = decoded.email;
+
         next();
-    } catch (error) {
-        return res.status(401).json({ error: 'Invalid or expired token' });
+    } catch {
+        res.status(401).json({ error: "Invalid or expired token" });
     }
 };

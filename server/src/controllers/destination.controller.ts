@@ -132,8 +132,14 @@ export const addPhoto = async (req: Request, res: Response) => {
     if (!destination) {
         return res.status(404).json({ error: 'Destination not found' });
     }
-
+    console.log({
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        bufferLength: file.buffer.length,
+    });
     try {
+
         const { url, public_id } = await uploadToCloudinary(file);
         const photo = await prisma.photo.create({
             data: {
@@ -143,10 +149,12 @@ export const addPhoto = async (req: Request, res: Response) => {
                 destinationId: id,
             },
         });
+
         res.status(201).json(photo);
-    } catch (error) {
-        console.error('Photo upload error:', error);
-        res.status(500).json({ error: 'Failed to upload photo' });
+    } catch (error: any) {
+
+
+        res.status(500).json({ error: error.message });
     }
 };
 

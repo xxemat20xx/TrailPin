@@ -35,22 +35,38 @@ router.delete('/:id/photos/:photoId', deletePhoto);
 publicRouter.get('/', async (_req, res) => {
     const destinations = await prisma.destination.findMany({
         take: 20,
-        include: {
-            photos: true,
+        select: {
+            id: true,
+            name: true,
+            latitude: true,
+            longitude: true,
+            address: true,
+            userId: true,               // ✅ add this
+            createdAt: true,
+            photos: {
+                select: { id: true, url: true, caption: true },
+                orderBy: { createdAt: 'asc' },
+            },
         },
-        orderBy: {
-            createdAt: 'desc',
-        },
+        orderBy: { createdAt: 'desc' },
     });
     res.json(destinations);
 });
+
 
 publicRouter.get('/:id', async (req, res) => {
     const id = String(req.params.id);
     try {
         const destination = await prisma.destination.findUnique({
             where: { id },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                latitude: true,
+                longitude: true,
+                address: true,
+                userId: true,           // ✅ add this
+                createdAt: true,
                 photos: {
                     select: { id: true, url: true, caption: true },
                     orderBy: { createdAt: 'asc' },
@@ -63,4 +79,3 @@ publicRouter.get('/:id', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch destination' });
     }
 });
-

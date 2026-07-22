@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getPublicDestination } from '../../api/publicDestinations';
 import type { Destination } from '../../api/destination';
 import MapView from '../../components/MapView';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar } from 'lucide-react';
 
 export default function DestinationDetail() {
     const { id } = useParams<{ id: string }>();
@@ -31,45 +31,46 @@ export default function DestinationDetail() {
         );
 
     return (
-        <div className="h-screen flex flex-col">
-            {/* Top bar */}
-            <div className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm">
-                <Link to="/" className="text-gray-600 hover:text-gray-900">
-                    <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div>
-                    <h1 className="text-xl font-bold">{destination.name}</h1>
-                    <p className="text-sm text-gray-600">{destination.address || 'No address'}</p>
-                </div>
+        <div className="max-w-4xl mx-auto p-6">
+            {/* Back link */}
+            <Link to="/" className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900 mb-4">
+                <ArrowLeft className="w-4 h-4" />
+                Back to all destinations
+            </Link>
+
+            {/* Title */}
+            <div className="mb-4">
+                <h1 className="text-3xl font-bold">{destination.name}</h1>
+                <p className="text-gray-600 flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    {destination.address || 'No address'}
+                </p>
             </div>
 
-            {/* Full‑height map */}
-            <div className="flex-1 relative">
+            {/* Smaller map (height 300px) */}
+            <div className="h-72 rounded-lg overflow-hidden shadow mb-6">
                 <MapView
                     destinations={[destination]}
                     selectedDest={destination}
                     onMarkerClick={() => { }}
                     center={[destination.latitude, destination.longitude]}
-
+                    zoom={15}
                 />
             </div>
 
-            {/* Photo gallery below map (or you can overlay) */}
-            <div className="p-4 bg-white border-t max-h-60 overflow-y-auto">
-                <h2 className="font-semibold mb-2">Photos ({destination.photos.length})</h2>
+            {/* Photo Gallery */}
+            <div>
+                <h2 className="text-xl font-semibold mb-3">Photos ({destination.photos.length})</h2>
                 {destination.photos.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No photos yet.</p>
+                    <p className="text-gray-500">No photos yet.</p>
                 ) : (
-                    <div className="flex gap-4 flex-wrap">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {destination.photos.map((photo) => (
-                            <div
-                                key={photo.id}
-                                className="rounded-lg overflow-hidden shadow w-48 flex-shrink-0"
-                            >
+                            <div key={photo.id} className="rounded-lg overflow-hidden shadow">
                                 <img
                                     src={photo.url}
                                     alt={photo.caption || destination.name}
-                                    className="w-full h-32 object-cover"
+                                    className="w-full h-40 object-cover"
                                 />
                                 {photo.caption && (
                                     <p className="text-xs p-2 text-gray-600">{photo.caption}</p>

@@ -6,6 +6,8 @@ export interface Destination {
     latitude: number;
     longitude: number;
     address?: string;
+    userId?: string;
+    createdAt?: Date;
     photos: { id: string; url: string; caption?: string }[];
 }
 

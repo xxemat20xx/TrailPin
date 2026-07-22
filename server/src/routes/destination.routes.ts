@@ -1,15 +1,13 @@
-
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import {
-    createDestination,
-    getUserDestinations,
-    getDestination,
-    updateDestination,
-    deleteDestination,
-    addPhoto,
-    deletePhoto,
-    addPhotoByUrl,
+  createDestination,
+  getUserDestinations,
+  getDestination,
+  updateDestination,
+  deleteDestination,
+  addPhoto,
+  deletePhoto,
 } from '../controllers/destination.controller';
 import { upload } from '../middleware/upload';
 import prisma from '../config/db';
@@ -17,7 +15,6 @@ import prisma from '../config/db';
 export const router = Router();
 export const publicRouter = Router();
 
-// All routes require authentication
 router.use(authenticate);
 
 router.post('/', createDestination);
@@ -26,11 +23,8 @@ router.get('/:id', getDestination);
 router.put('/:id', updateDestination);
 router.delete('/:id', deleteDestination);
 
-// Photo routes nested under a destination
-router.post("/:id/photos", upload.single("photo"), addPhoto);
-router.post('/:id/photos/url', addPhotoByUrl); //for backend testing
-router.delete('/:id/photos/:photoId', deletePhoto);
-
+router.post('/:id/photos', upload.single('photo'), addPhoto);
+router.delete('/:id/photos/:photoId', deletePhoto)
 
 publicRouter.get('/', async (_req, res) => {
     const destinations = await prisma.destination.findMany({

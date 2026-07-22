@@ -103,119 +103,89 @@ export const deleteDestination = async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const userId = req.userId!;
 
+    // Fetch the destination with its photos' public_ids
     const destination = await prisma.destination.findFirst({
         where: { id, userId },
+        include: { photos: { select: { public_id: true } } },
     });
 
     if (!destination) {
         return res.status(404).json({ error: 'Destination not found' });
     }
 
+    // Delete photos from Cloudinary
+    const deletePromises = destination.photos.map((photo) => {
+        if (photo.public_id) {
+            return cloudinary.uploader.destroy(photo.public_id).catch((err) => {
+                console.error(`Failed to delete Cloudinary photo ${photo.public_id}:`, err);
+                // continue even if one fails
+            });
+        }
+    });
+    await Promise.all(deletePromises);
+
+    // Delete the destination (cascade will remove photo records)
     await prisma.destination.delete({ where: { id } });
 
-    res.json({ message: 'Destination deleted' });
+    res.json({ message: 'Destination and all photos deleted' });
 };
-
 // ---------- Add Photo ----------
 export const addPhoto = async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const userId = req.userId!;
-    const file = req.file;
+  const id = String(req.params.id);
+  const userId = req.userId!;
+  const file = req.file;
 
-    if (!file) {
-        return res.status(400).json({ error: 'No image file provided' });
-    }
+  if (!file) {
+    return res.status(400).json({ error: 'No image file provided' });
+  }
 
-    const destination = await prisma.destination.findFirst({
-        where: { id, userId },
+  const destination = await prisma.destination.findFirst({
+    where: { id, userId },
+  });
+  if (!destination) {
+    return res.status(404).json({ error: 'Destination not found' });
+  }
+
+  try {
+    const { url, public_id } = await uploadToCloudinary(file);
+    const photo = await prisma.photo.create({
+      data: {
+        url,
+        public_id,
+        caption: req.body.caption || null,
+        destinationId: id,
+      },
     });
-    if (!destination) {
-        return res.status(404).json({ error: 'Destination not found' });
-    }
-    console.log({
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size,
-        bufferLength: file.buffer.length,
-    });
-    try {
-
-        const { url, public_id } = await uploadToCloudinary(file);
-        const photo = await prisma.photo.create({
-            data: {
-                url,
-                public_id,
-                caption: req.body.caption || null,
-                destinationId: id,
-            },
-        });
-
-        res.status(201).json(photo);
-    } catch (error: any) {
-
-
-        res.status(500).json({ error: error.message });
-    }
+    res.status(201).json(photo);
+  } catch (error: any) {
+    console.error('Add photo failed:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
 };
 
 // ---------- Delete Photo ----------
 export const deletePhoto = async (req: Request, res: Response) => {
-    const photoId = String(req.params.photoId);
-    const userId = req.userId!;
+  const photoId = String(req.params.photoId);
+  const userId = req.userId!;
 
-    const photo = await prisma.photo.findUnique({
-        where: { id: photoId },
-        include: { destination: { select: { userId: true } } },
-    });
+  const photo = await prisma.photo.findUnique({
+    where: { id: photoId },
+    include: { destination: { select: { userId: true } } },
+  });
 
-    if (!photo || photo.destination.userId !== userId) {
-        return res.status(404).json({ error: 'Photo not found' });
+  if (!photo || photo.destination.userId !== userId) {
+    return res.status(404).json({ error: 'Photo not found' });
+  }
+
+  try {
+    if (photo.public_id) {
+      await cloudinary.uploader.destroy(photo.public_id);
     }
+  } catch (cloudErr) {
+    console.error('Cloudinary delete error:', cloudErr);
+  }
 
-    try {
-        if (photo.public_id) {
-            await cloudinary.uploader.destroy(photo.public_id);
-        }
-    } catch (cloudErr) {
-        console.error('Cloudinary delete error:', cloudErr);
-    }
-
-    await prisma.photo.delete({ where: { id: photoId } });
-
-    res.json({ message: 'Photo deleted' });
+  await prisma.photo.delete({ where: { id: photoId } });
+  res.json({ message: 'Photo deleted' });
 };
 
-export const addPhotoByUrl = async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const userId = req.userId!;
-    const { url, caption } = req.body;
-    console.log("addPhotoByUrl called");
-    try {
-        if (!url) {
-            return res.status(400).json({ error: 'URL is required' });
-        }
-
-        // Verify destination belongs to user
-        const destination = await prisma.destination.findFirst({
-            where: { id, userId },
-        });
-        if (!destination) {
-            return res.status(404).json({ error: 'Destination not found' });
-        }
-
-        // Save directly (without Cloudinary upload)
-        const photo = await prisma.photo.create({
-            data: {
-                url,
-                public_id: 'manual_test_' + Date.now(), // dummy public_id
-                caption: caption || null,
-                destinationId: id,
-            },
-        });
-
-        res.status(201).json(photo);
-    } catch (error) {
-        console.error('Photo upload error:', error);
-        res.status(500).json({ error: 'Failed to upload photo' });
-    }
-};

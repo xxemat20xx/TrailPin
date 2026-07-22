@@ -1,11 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();                     // ← MUST be before any imports that use env vars
+
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import { router as destinationRoutes, publicRouter as publicDestinationRoutes } from './routes/destination.routes';
-
-dotenv.config();
+import cloudinary from './config/cloudinary';   // now env is loaded
 
 const app = express();
 
@@ -15,12 +16,10 @@ app.use(
         credentials: true,
     })
 );
-
 app.use(cookieParser());
 app.use(express.json());
 
-// Auth routes
-
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/public/destinations', publicDestinationRoutes);
@@ -28,6 +27,25 @@ app.use('/api/public/destinations', publicDestinationRoutes);
 // Health check
 app.get('/health', (_req, res) => {
     res.json({ message: 'Server is running' });
+});
+
+// TEMPORARY test endpoint
+app.get('/api/test-cloudinary', async (_req, res) => {
+    const base64Image =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
+    try {
+      const result = await cloudinary.uploader.upload(
+        `data:image/png;base64,${base64Image}`,
+        { folder: 'test' }
+      );
+      res.json({ success: true, url: result.secure_url });
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message,
+        http_code: error.http_code,
+        name: error.name,
+      });
+    }
 });
 
 const PORT = process.env.PORT || 5000;

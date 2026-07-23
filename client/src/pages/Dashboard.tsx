@@ -1,199 +1,225 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import { getPublicDestinations } from '../api/publicDestinations';
-import type { Destination } from '../api/destination';
-
-import DestinationCard from '../components/destination/DestinationCard';
-import AddDestinationModal from '../components/destination/AddDestinationModal';
-import EditDestinationModal from '../components/destination/EditDestinationModal';
-import DeleteDestinationModal from '../components/destination/DeleteDestinationModal';
-
 import {
-    Plus,
-    MapPin,
-    Compass,
-    Search,
-    Filter,
-} from 'lucide-react';
+  Search,
+  MapPin,
+  Clock3,
+  Users,
+  Route,
+  Heart,
+  MessageCircle,
+} from "lucide-react";
+import { useAuthStore } from "../stores/authStore";
+import { useDestinationStore } from "../stores/destinationStore";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import DestinationFormModal from '../components/destination/DestinationFormModal';
+import type { Destination } from "../api/destination";
 
 export default function Dashboard() {
-    const { user } = useAuthStore();
-    const navigate = useNavigate();
+  const {
+    destinations,
+    loading,
+    error,
+    fetchDestinations,
+    addDestination,
+    editDestination,
+    removeDestination,
+  } = useDestinationStore();
+  const { fetchUsers, users, user } = useAuthStore();
+  const navigate = useNavigate();
 
-    const [destinations, setDestinations] = useState<Destination[]>([]);
-    const [filtered, setFiltered] = useState<Destination[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
-    const [deletingDestination, setDeletingDestination] = useState<Destination | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
 
-    const fetchDestinations = async () => {
-        try {
-            const res = await getPublicDestinations();
-            setDestinations(res.data);
-            setFiltered(res.data);
-        } catch (err) {
-            console.error('Failed to load destinations', err);
-        }
-    };
 
-    useEffect(() => {
-        fetchDestinations();
-    }, []);
+  useEffect(() => {
+    fetchDestinations();
+    fetchUsers();
+  }, []);
 
-    // Search filter
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setFiltered(destinations);
-            return;
-        }
-        const q = searchQuery.toLowerCase();
-        setFiltered(
-            destinations.filter(
-                (d) =>
-                    d.name.toLowerCase().includes(q) ||
-                    (d.address && d.address.toLowerCase().includes(q))
-            )
-        );
-    }, [searchQuery, destinations]);
+  const filtered = destinations.filter(d => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (d.name.toLocaleLowerCase().includes(q) || d.address && d.address.toLocaleLowerCase().includes(q))
+  })
 
-    const handleAddClick = () => {
-        if (!user) {
-            navigate('/login?redirect=/dashboard');
-            return;
-        }
-        setShowAddModal(true);
-    };
+  const userCount = users.length;
+  const destCount = destinations.length;
+  // helper to get the first photo
+  const getImageUrl = (dest: (typeof destinations)[0]) =>
+    dest.photos?.[0]?.url ||
+    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200';
 
-    const handleAddSuccess = () => {
-        setShowAddModal(false);
-        fetchDestinations();
-    };
-    const handleEditSuccess = () => {
-        setEditingDestination(null);
-        fetchDestinations();
-    };
-    const handleDeleteSuccess = () => {
-        setDeletingDestination(null);
-        fetchDestinations();
-    };
 
-    return (
-        <div className="min-h-screen bg-white dark:bg-slate-950">
-            {/* ========== HERO (more compact & modern) ========== */}
-            <section className="relative bg-gradient-to-r from-indigo-600 to-blue-700 overflow-hidden">
-                {/* Decorative background shapes */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute -top-24 -right-24 w-96 h-96 bg-white rounded-full blur-3xl" />
-                    <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-cyan-400 rounded-full blur-3xl" />
-                </div>
+  // actions
+  const handleAdd = () => {
+    if (!user) {
+      navigate('/login?redirect=/dashboard')
+    }
+  }
 
-                <div className="relative max-w-7xl mx-auto px-6 py-12 md:py-16">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div className="text-white">
-                            <div className="flex items-center gap-2 mb-3">
-                                <Compass className="w-8 h-8" />
-                                <span className="text-sm uppercase tracking-widest font-semibold opacity-80">
-                                    TrailPin
-                                </span>
-                            </div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-                                Wanderlust Journal
-                            </h1>
-                            <p className="mt-2 text-indigo-100 max-w-lg">
-                                Discover, save, and share your favorite riding destinations.
-                            </p>
-                        </div>
 
-                        <button
-                            onClick={handleAddClick}
-                            className="inline-flex items-center gap-2 bg-white text-indigo-700 font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-transform"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Destination
-                        </button>
-                    </div>
-                </div>
-            </section>
+  return (
+    <div className="bg-gray-100 min-h-screen py-24">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* HERO */}
+        <div className="bg-gradient-to-r from-[#242222] to-[#373434] rounded-3xl p-10 text-white shadow-xl">
+          <p className="text-orange-400 font-semibold">
+            Welcome Back Rider 👋
+          </p>
 
-            {/* ========== SEARCH BAR ========== */}
-            <div className="max-w-7xl mx-auto px-6 py-6">
-                <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search destinations..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                    />
-                </div>
-            </div>
+          <h1 className="text-5xl font-black mt-2">
+            Where are you riding today?
+          </h1>
 
-            {/* ========== CARD GRID ========== */}
-            <section className="max-w-7xl mx-auto px-6 pb-20">
-                {filtered.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                        <MapPin className="w-16 h-16 mb-4" />
-                        <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-300">
-                            No destinations found
-                        </h2>
-                        <p className="mt-2 text-gray-500">
-                            {destinations.length === 0
-                                ? 'Start your journey by adding the first destination.'
-                                : 'Try a different search term.'}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filtered.map((dest, idx) => (
-                            <div
-                                key={dest.id}
-                                className="opacity-0 animate-fadeInUp"
-                                style={{ animationDelay: `${idx * 80}ms`, animationFillMode: 'forwards' }}
-                            >
-                                <DestinationCard
-                                    destination={dest}
-                                    onEdit={setEditingDestination}
-                                    onDelete={setDeletingDestination}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
+          <p className="text-gray-300 mt-4 max-w-xl">
+            Discover beautiful motorcycle routes shared by the community and
+            start your next adventure.
+          </p>
 
-            {/* ========== FLOATING ADD BUTTON (Mobile) ========== */}
-            <button
-                onClick={handleAddClick}
-                className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-indigo-600 text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-transform md:hidden"
-            >
-                <Plus className="w-6 h-6" />
-            </button>
+          {/* Search */}
+          <div className="bg-white rounded-full mt-8 flex items-center p-2 w-full">
+            <Search className="text-gray-500 ml-4" />
 
-            {/* ========== MODALS ========== */}
-            {showAddModal && (
-                <AddDestinationModal
-                    onClose={() => setShowAddModal(false)}
-                    onSuccess={handleAddSuccess}
-                />
-            )}
-            {editingDestination && (
-                <EditDestinationModal
-                    destination={editingDestination}
-                    onClose={() => setEditingDestination(null)}
-                    onSuccess={handleEditSuccess}
-                />
-            )}
-            {deletingDestination && (
-                <DeleteDestinationModal
-                    destinationId={deletingDestination.id}
-                    destinationName={deletingDestination.name}
-                    onClose={() => setDeletingDestination(null)}
-                    onSuccess={handleDeleteSuccess}
-                />
-            )}
+            <input
+              type="text"
+              placeholder="Search destination..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 px-4 py-3 outline-none text-black"
+            />
+
+          </div>
         </div>
-    );
+
+        {/* STATS */}
+        <div className="grid md:grid-cols-3 gap-5 mt-8">
+          <div className="bg-white rounded-2xl p-6 shadow">
+            <Users className="text-orange-400 mb-3" />
+            <h2 className="text-3xl font-bold">{userCount}</h2>
+            <p className="text-gray-500">Community Riders</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow">
+            <MapPin className="text-orange-400 mb-3" />
+            <h2 className="text-3xl font-bold">{destCount}</h2>
+            <p className="text-gray-500">Destinations</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow">
+            <Route className="text-orange-400 mb-3" />
+            <h2 className="text-3xl font-bold">890</h2>
+            <p className="text-gray-500">Routes Shared</p>
+          </div>
+        </div>
+
+        {/* Featured */}
+        {/* <div className="mt-12">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-3xl font-bold">
+              🔥 Featured Destinations
+            </h2>
+
+            <button className="text-orange-500 font-semibold">
+              View All
+            </button>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {destinations.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden"
+              >
+                <img
+                  src={item.image}
+                  className="h-56 w-full object-cover"
+                />
+
+                <div className="p-6">
+                  <h3 className="text-2xl font-bold">
+                    {item.title}
+                  </h3>
+
+                  <p className="text-gray-500 mt-2">
+                    {item.description}
+                  </p>
+
+                  <div className="flex justify-between mt-6 text-sm text-gray-600">
+                    <span>📍 {item.distance}</span>
+
+                    <span>🕒 {item.duration}</span>
+                  </div>
+
+                  <button className="mt-6 w-full bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold">
+                    View Itinerary
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div> */}
+
+        {/* COMMUNITY */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold mb-8">
+            🏍 Community Rides
+          </h2>
+
+          <div className="space-y-12">
+            {filtered.map((ride, index) => (
+              <div
+                key={ride.id}
+                className={`grid lg:grid-cols-2 gap-10 items-center ${index % 2 !== 0
+                  ? "lg:[&>*:first-child]:order-2"
+                  : ""
+                  }`}
+              >
+                <img
+                  src={getImageUrl(ride)}
+                  className="rounded-3xl h-96 w-full object-cover shadow-lg"
+                />
+
+                <div>
+
+
+                  <h2 className="text-5xl font-black mt-2">
+                    {ride.name}
+                  </h2>
+
+                  <p className="text-gray-600 mt-6 leading-8">
+                    {ride.address}
+                  </p>
+                  <p className="text-orange-500 font-semibold">
+                    <em className="text-slate-600">Shared by {ride.user?.name}</em>
+                  </p>
+
+                  <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
+                    View Full Route
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Floating Button */}
+        <button onClick={() => { setModalMode('add'); setSelectedDestination(null); setShowModal(true) }
+        } className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition">
+          +
+        </button>
+
+
+      </div>
+     
+      {showModal && (
+        <DestinationFormModal
+          mode={modalMode}
+          destination={selectedDestination}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  );
 }

@@ -12,3 +12,5 @@ export const verifyEmail = (token: string) =>
     apiClient.get(`/auth/verify-email?token=${token}`);
 
 export const logoutUser = () => apiClient.post('/auth/logout');
+
+export const getAllUsers = () => apiClient.get('/auth/users');

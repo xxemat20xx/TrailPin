@@ -6,7 +6,8 @@ import {
     getMe,
     googleRedirect,
     googleCallback,
-    logout
+    logout,
+    getAllUsers
 } from '../controllers/auth.controller'
 import { authenticate } from '../middleware/auth.middleware';
 
@@ -24,5 +25,7 @@ router.get('/google/callback', googleCallback);
 // authenticated routes
 router.get('/me', authenticate, getMe);
 router.post('/logout', authenticate, logout);
+
+router.get('/users', getAllUsers);
 
 export default router;

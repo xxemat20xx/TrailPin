@@ -207,3 +207,21 @@ export const logout = (req: Request, res: Response) => {
     res.clearCookie('token');
     res.json({ message: 'Logged out' });
 };
+export const getAllUsers = async (req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                avatar: true,
+                isVerified: true,
+                createdAt: true,
+            },
+        });
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};

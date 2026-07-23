@@ -5,129 +5,150 @@ import cloudinary from '../config/cloudinary';
 
 // ---------- Create Destination ----------
 export const createDestination = async (req: Request, res: Response) => {
-    const { name, latitude, longitude, address } = req.body;
-    const userId = req.userId!;
+  const { name, latitude, longitude, address, description } = req.body;
+  const userId = req.userId!;
 
-    if (!name || latitude == null || longitude == null) {
-        return res.status(400).json({ error: 'Name, latitude, and longitude are required' });
-    }
-
-    const destination = await prisma.destination.create({
-        data: {
-            name,
-            latitude,
-            longitude,
-            address: address || null,
-            userId,
-        },
+  if (!name || latitude == null || longitude == null) {
+    return res.status(400).json({
+      error: "Name, latitude, and longitude are required",
     });
+  }
 
-    res.status(201).json(destination);
+  const destination = await prisma.destination.create({
+    data: {
+      name,
+      latitude,
+      longitude,
+      address: address || null,
+      description: description || null,
+      userId,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+        },
+      },
+    },
+  });
+
+  res.status(201).json(destination);
 };
+
 
 // ---------- Get All Destinations ----------
 export const getUserDestinations = async (req: Request, res: Response) => {
-    const userId = req.userId!;
+  const userId = req.userId!;
 
-    const destinations = await prisma.destination.findMany({
-        where: { userId },
-        include: {
-            photos: {
-                select: { id: true, url: true, caption: true },
-                orderBy: { createdAt: 'asc' },
-            },
+  const destinations = await prisma.destination.findMany({
+    where: { userId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
         },
-        orderBy: { createdAt: 'desc' },
-    });
+      },
+      photos: {
+        select: { id: true, url: true, caption: true },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    res.json(destinations);
+  res.json(destinations);
 };
 
 // ---------- Get Single Destination ----------
 export const getDestination = async (req: Request, res: Response) => {
-    console.log("getDestination id:", req.params.id);
-    const id = String(req.params.id);
-    const userId = req.userId!;
+  console.log("getDestination id:", req.params.id);
+  const id = String(req.params.id);
+  const userId = req.userId!;
 
-    const destination = await prisma.destination.findFirst({
-        where: { id, userId },
-        include: {
-            photos: {
-                select: { id: true, url: true, caption: true },
-                orderBy: { createdAt: 'asc' },
-            },
-        },
-    });
+  const destination = await prisma.destination.findFirst({
+    where: { id, userId },
+    include: {
+      photos: {
+        select: { id: true, url: true, caption: true },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  });
 
-    if (!destination) {
-        return res.status(404).json({ error: 'Destination not found' });
-    }
+  if (!destination) {
+    return res.status(404).json({ error: 'Destination not found' });
+  }
 
-    res.json(destination);
+  res.json(destination);
 };
 
 // ---------- Update Destination ----------
 export const updateDestination = async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const userId = req.userId!;
-    const { name, latitude, longitude, address } = req.body;
+  const id = String(req.params.id);
+  const userId = req.userId!;
+  const { name, latitude, longitude, address, description } = req.body;
 
-    const destination = await prisma.destination.findFirst({
-        where: { id, userId },
-    });
+  const destination = await prisma.destination.findFirst({
+    where: { id, userId },
+  });
 
-    if (!destination) {
-        return res.status(404).json({ error: 'Destination not found' });
-    }
+  if (!destination) {
+    return res.status(404).json({ error: 'Destination not found' });
+  }
 
-    const updated = await prisma.destination.update({
-        where: { id },
-        data: {
-            name: name ?? destination.name,
-            latitude: latitude ?? destination.latitude,
-            longitude: longitude ?? destination.longitude,
-            address: address !== undefined ? address : destination.address,
-        },
-        include: {
-            photos: {
-                select: { id: true, url: true, caption: true },
-            },
-        },
-    });
+  const updated = await prisma.destination.update({
+    where: { id },
+    data: {
+      name: name ?? destination.name,
+      latitude: latitude ?? destination.latitude,
+      longitude: longitude ?? destination.longitude,
+      address: address !== undefined ? address : destination.address,
+      description: description !== undefined ? description : destination.description,
+    },
+    include: {
+      photos: {
+        select: { id: true, url: true, caption: true },
+      },
+    },
+  });
 
-    res.json(updated);
+  res.json(updated);
 };
 
 // ---------- Delete Destination ----------
 export const deleteDestination = async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const userId = req.userId!;
+  const id = String(req.params.id);
+  const userId = req.userId!;
 
-    // Fetch the destination with its photos' public_ids
-    const destination = await prisma.destination.findFirst({
-        where: { id, userId },
-        include: { photos: { select: { public_id: true } } },
-    });
+  // Fetch the destination with its photos' public_ids
+  const destination = await prisma.destination.findFirst({
+    where: { id, userId },
+    include: { photos: { select: { public_id: true } } },
+  });
 
-    if (!destination) {
-        return res.status(404).json({ error: 'Destination not found' });
+  if (!destination) {
+    return res.status(404).json({ error: 'Destination not found' });
+  }
+
+  // Delete photos from Cloudinary
+  const deletePromises = destination.photos.map((photo) => {
+    if (photo.public_id) {
+      return cloudinary.uploader.destroy(photo.public_id).catch((err) => {
+        console.error(`Failed to delete Cloudinary photo ${photo.public_id}:`, err);
+        // continue even if one fails
+      });
     }
+  });
+  await Promise.all(deletePromises);
 
-    // Delete photos from Cloudinary
-    const deletePromises = destination.photos.map((photo) => {
-        if (photo.public_id) {
-            return cloudinary.uploader.destroy(photo.public_id).catch((err) => {
-                console.error(`Failed to delete Cloudinary photo ${photo.public_id}:`, err);
-                // continue even if one fails
-            });
-        }
-    });
-    await Promise.all(deletePromises);
+  // Delete the destination (cascade will remove photo records)
+  await prisma.destination.delete({ where: { id } });
 
-    // Delete the destination (cascade will remove photo records)
-    await prisma.destination.delete({ where: { id } });
-
-    res.json({ message: 'Destination and all photos deleted' });
+  res.json({ message: 'Destination and all photos deleted' });
 };
 // ---------- Add Photo ----------
 export const addPhoto = async (req: Request, res: Response) => {

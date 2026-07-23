@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import {
-  createDestination,
-  getUserDestinations,
-  getDestination,
-  updateDestination,
-  deleteDestination,
-  addPhoto,
-  deletePhoto,
+    createDestination,
+    getUserDestinations,
+    getDestination,
+    updateDestination,
+    deleteDestination,
+    addPhoto,
+    deletePhoto,
 } from '../controllers/destination.controller';
 import { upload } from '../middleware/upload';
 import prisma from '../config/db';
@@ -35,7 +35,14 @@ publicRouter.get('/', async (_req, res) => {
             latitude: true,
             longitude: true,
             address: true,
+            description: true,
             userId: true,               // ✅ add this
+            user: {
+                select: {
+                    name: true,
+                    avatar: true,
+                },
+            },
             createdAt: true,
             photos: {
                 select: { id: true, url: true, caption: true },
@@ -60,6 +67,12 @@ publicRouter.get('/:id', async (req, res) => {
                 longitude: true,
                 address: true,
                 userId: true,           // ✅ add this
+                user: {
+                    select: {
+                        name: true,
+                        avatar: true,
+                    },
+                },
                 createdAt: true,
                 photos: {
                     select: { id: true, url: true, caption: true },

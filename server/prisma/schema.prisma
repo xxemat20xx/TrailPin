@@ -32,6 +32,7 @@ model Destination {
   name      String
   latitude  Float
   longitude Float
+  description String? 
   address   String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

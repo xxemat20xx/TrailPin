@@ -20,20 +20,30 @@ model User {
   googleId   String? @unique
   isVerified Boolean @default(false)
 
-  // Add this
+  //relation
   destinations Destination[]
+  likes        Like[]
+  comments     Comment[]
+  ratings      Rating[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Destination {
-  id        String   @id @default(uuid())
-  name      String
-  latitude  Float
-  longitude Float
-  description String? 
-  address   String?
+  id          String  @id @default(uuid())
+  name        String
+  latitude    Float
+  longitude   Float
+  description String?
+  address     String?
+  distance    Float?
+  duration    String?
+
+  comments Comment[]
+  ratings  Rating[]
+  likes    Like[]
+
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos    Photo[]
@@ -49,4 +59,40 @@ model Photo {
   destinationId String
   destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
   createdAt     DateTime    @default(now())
+}
+
+model Like {
+  id            String      @id @default(uuid())
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([userId, destinationId])
+}
+
+model Comment {
+  id            String      @id @default(uuid())
+  text          String
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Rating {
+  id            String      @id @default(uuid())
+  score         Int // 1-5 stars
+  review        String? // optional text review
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, destinationId]) // one rating per user per destination
 }

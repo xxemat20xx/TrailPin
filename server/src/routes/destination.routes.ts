@@ -9,6 +9,11 @@ import {
     addPhoto,
     deletePhoto,
 } from '../controllers/destination.controller';
+import {
+    toggleLike,
+    addComment,
+    deleteComment,
+} from '../controllers/interaction.controller';
 import { upload } from '../middleware/upload';
 import prisma from '../config/db';
 
@@ -26,9 +31,16 @@ router.delete('/:id', deleteDestination);
 router.post('/:id/photos', upload.single('photo'), addPhoto);
 router.delete('/:id/photos/:photoId', deletePhoto)
 
-publicRouter.get('/', async (_req, res) => {
+
+//interaction
+router.post('/:id/like', toggleLike);
+router.post('/:id/comments', addComment);
+router.delete('/:id/comments/:commentId', deleteComment);
+
+publicRouter.get('/', async (req, res) => {
+    const userId = req.userId;
+
     const destinations = await prisma.destination.findMany({
-        take: 20,
         select: {
             id: true,
             name: true,
@@ -36,22 +48,33 @@ publicRouter.get('/', async (_req, res) => {
             longitude: true,
             address: true,
             description: true,
-            userId: true,               // ✅ add this
-            user: {
-                select: {
-                    name: true,
-                    avatar: true,
-                },
-            },
+            distance: true,
+            duration: true,
+            userId: true,
             createdAt: true,
             photos: {
                 select: { id: true, url: true, caption: true },
                 orderBy: { createdAt: 'asc' },
             },
+            _count: { select: { likes: true, comments: true } },
+            // If user is logged in, check if they liked each destination
+            ...(userId
+                ? { likes: { where: { userId }, select: { id: true } } }
+                : {}),
         },
         orderBy: { createdAt: 'desc' },
     });
-    res.json(destinations);
+
+    const result = destinations.map((dest: any) => ({
+        ...dest,
+        likeCount: dest._count.likes,
+        commentCount: dest._count.comments,
+        userLiked: userId ? dest.likes?.length > 0 : false,
+        likes: undefined,
+        _count: undefined,
+    }));
+
+    res.json(result);
 });
 
 

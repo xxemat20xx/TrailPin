@@ -11,6 +11,12 @@ export interface Destination {
     user?: { name: string; avatar: string };
     createdAt?: Date;
     photos: { id: string; url: string; caption?: string }[];
+
+    //interaction
+
+    likeCount: number;
+    commentCount: number;
+    userLiked: boolean;
 }
 
 export const getDestinations = () =>
@@ -39,5 +45,18 @@ export const addPhoto = (destinationId: string, formData: FormData) =>
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
+//interactions
 export const deletePhoto = (destinationId: string, photoId: string) =>
     apiClient.delete(`/destinations/${destinationId}/photos/${photoId}`);
+
+export const likeDestination = (id: string) =>
+    apiClient.post(`/destinations/${id}/like`);
+
+export const addComment = (destinationId: string, text: string) =>
+    apiClient.post(`/destinations/${destinationId}/comments`, { text });
+
+export const deleteComment = (destinationId: string, commentId: string) =>
+    apiClient.delete(`/destinations/${destinationId}/comments/${commentId}`);
+
+// export const getFeaturedDestinations = () =>
+//     apiClient.get<Destination[]>('/public/destinations/featured');

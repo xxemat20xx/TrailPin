@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DestinationFormModal from '../components/destination/DestinationFormModal';
 import type { Destination } from "../api/destination";
+import DashboardCommunityCard from '../components/dashboard/DashboardCommunityCard';
 
 export default function Dashboard() {
   const {
@@ -26,7 +27,6 @@ export default function Dashboard() {
   } = useDestinationStore();
   const { fetchUsers, users, user } = useAuthStore();
   const navigate = useNavigate();
-
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -38,27 +38,20 @@ export default function Dashboard() {
     fetchUsers();
   }, []);
 
-  const filtered = destinations.filter(d => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (d.name.toLocaleLowerCase().includes(q) || d.address && d.address.toLocaleLowerCase().includes(q))
-  })
+  console.log(destinations)
 
   const userCount = users.length;
   const destCount = destinations.length;
-  // helper to get the first photo
-  const getImageUrl = (dest: (typeof destinations)[0]) =>
-    dest.photos?.[0]?.url ||
-    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200';
 
-
-  // actions
-  const handleAdd = () => {
+  const handleAddDestination = () => {
     if (!user) {
-      navigate('/login?redirect=/dashboard')
+      navigate('/login?redirect=/dashboard');
+      return;
     }
+    setModalMode('add');
+    setSelectedDestination(null);
+    setShowModal(true);
   }
-
 
   return (
     <div className="bg-gray-100 min-h-screen py-24">
@@ -162,57 +155,21 @@ export default function Dashboard() {
         </div> */}
 
         {/* COMMUNITY */}
-        <div className="mt-16">
-          <h2 className="text-3xl font-bold mb-8">
-            🏍 Community Rides
-          </h2>
+        <DashboardCommunityCard
+          destinations={destinations}
+          searchQuery={searchQuery}
 
-          <div className="space-y-12">
-            {filtered.map((ride, index) => (
-              <div
-                key={ride.id}
-                className={`grid lg:grid-cols-2 gap-10 items-center ${index % 2 !== 0
-                  ? "lg:[&>*:first-child]:order-2"
-                  : ""
-                  }`}
-              >
-                <img
-                  src={getImageUrl(ride)}
-                  className="rounded-3xl h-96 w-full object-cover shadow-lg"
-                />
-
-                <div>
-
-
-                  <h2 className="text-5xl font-black mt-2">
-                    {ride.name}
-                  </h2>
-
-                  <p className="text-gray-600 mt-6 leading-8">
-                    {ride.address}
-                  </p>
-                  <p className="text-orange-500 font-semibold">
-                    <em className="text-slate-600">Shared by {ride.user?.name}</em>
-                  </p>
-
-                  <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
-                    View Full Route
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        />
 
         {/* Floating Button */}
-        <button onClick={() => { setModalMode('add'); setSelectedDestination(null); setShowModal(true) }
-        } className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition">
+        <button onClick={() => handleAddDestination()}
+          className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition">
           +
         </button>
 
 
       </div>
-     
+
       {showModal && (
         <DestinationFormModal
           mode={modalMode}

@@ -14,6 +14,10 @@ import {
     addComment,
     deleteComment,
 } from '../controllers/interaction.controller';
+import {
+    rateDestination,
+    getRatings,
+} from '../controllers/rating.controller';
 import { upload } from '../middleware/upload';
 import prisma from '../config/db';
 
@@ -37,6 +41,11 @@ router.post('/:id/like', toggleLike);
 router.post('/:id/comments', addComment);
 router.delete('/:id/comments/:commentId', deleteComment);
 
+// ratings
+router.post('/:id/rate', rateDestination);
+router.get('/:id/ratings', getRatings);
+
+
 publicRouter.get('/', async (req, res) => {
     const userId = req.userId;
 
@@ -52,6 +61,20 @@ publicRouter.get('/', async (req, res) => {
             duration: true,
             userId: true,
             createdAt: true,
+            ratings: {
+                select: {
+                    score: true,
+                    review: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            avatar: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+            },
             photos: {
                 select: { id: true, url: true, caption: true },
                 orderBy: { createdAt: 'asc' },

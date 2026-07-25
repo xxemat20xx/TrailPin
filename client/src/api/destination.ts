@@ -8,6 +8,7 @@ export interface Destination {
     address?: string;
     description?
     userId?: string;
+    averageRating?: number | null;
     user?: { name: string; avatar: string };
     createdAt?: Date;
     photos: { id: string; url: string; caption?: string }[];

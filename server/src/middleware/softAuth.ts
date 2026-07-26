@@ -19,7 +19,7 @@ export const softAuth = (req: Request, _res: Response, next: NextFunction) => {
             req.userId = decoded.userId;
             req.userEmail = decoded.email;
         } catch {
-            // Invalid token – just continue without user
+            // invalid token but still continue, user remains undefined
         }
     }
     next();

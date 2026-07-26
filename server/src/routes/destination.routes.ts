@@ -13,6 +13,7 @@ import {
     toggleLike,
     addComment,
     deleteComment,
+    getComments
 } from '../controllers/interaction.controller';
 import {
     rateDestination,
@@ -38,16 +39,19 @@ router.post('/:id/photos', upload.single('photo'), addPhoto);
 router.delete('/:id/photos/:photoId', deletePhoto)
 
 
-//interaction
-router.post('/:id/like', toggleLike);
+// # comments
+publicRouter.get('/:id/comments', getComments)
 router.post('/:id/comments', addComment);
 router.delete('/:id/comments/:commentId', deleteComment);
 
-// ratings
+// # LIKE
+router.post('/:id/like', toggleLike);
+
+// # RATINGS
 router.post('/:id/rating', rateDestination);
 router.get('/:id/ratings', getRatings);
 
-
+// ---------- PUBLIC ROUTES(soft auth) ----------
 // ---------- LIST ALL DESTINATIONS ----------
 publicRouter.get('/', async (req, res) => {
     const userId = req.userId;   // may be undefined

@@ -13,13 +13,13 @@ export interface Destination {
     userRating?: number | null;
     user?: { name: string; avatar: string };
     createdAt?: Date;
-    photos: { id: string; url: string; caption?: string }[];
+    photos?: { id: string; url: string; caption?: string }[];
 
     //interaction
 
-    likeCount: number;
-    commentCount: number;
-    userLiked: boolean;
+    likeCount?: number;
+    commentCount?: number;
+    userLiked?: boolean;
 }
 
 export const getDestinations = () =>
@@ -55,11 +55,13 @@ export const deletePhoto = (destinationId: string, photoId: string) =>
 export const likeDestination = (id: string) =>
     apiClient.post(`/destinations/${id}/like`);
 
+
+// ###### COMMENTS
+export const getComments = (destinationId: string) =>
+    apiClient.get(`/public/destinations/${destinationId}/comments`);
+
 export const addComment = (destinationId: string, text: string) =>
     apiClient.post(`/destinations/${destinationId}/comments`, { text });
 
 export const deleteComment = (destinationId: string, commentId: string) =>
     apiClient.delete(`/destinations/${destinationId}/comments/${commentId}`);
-
-// export const getFeaturedDestinations = () =>
-//     apiClient.get<Destination[]>('/public/destinations/featured');

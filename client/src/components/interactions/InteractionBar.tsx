@@ -8,7 +8,7 @@ interface Props {
     initialLiked: boolean;
     initialLikeCount: number;
     commentCount: number;
-    onCommentClick: () => void;
+    onCommentClick?: () => void;
 }
 
 export default function InteractionBar({

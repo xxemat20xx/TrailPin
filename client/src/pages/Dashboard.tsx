@@ -18,12 +18,7 @@ import DashboardCommunityCard from '../components/dashboard/DashboardCommunityCa
 export default function Dashboard() {
   const {
     destinations,
-    loading,
-    error,
     fetchDestinations,
-    addDestination,
-    editDestination,
-    removeDestination,
   } = useDestinationStore();
   const { fetchUsers, users, user } = useAuthStore();
   const navigate = useNavigate();

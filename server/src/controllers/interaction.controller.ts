@@ -51,3 +51,33 @@ export const deleteComment = async (req: Request, res: Response) => {
     await prisma.comment.delete({ where: { id: commentId } });
     res.json({ message: 'Comment deleted' });
 };
+
+export const getComments = async (req: Request, res: Response) => {
+    const destinationId = String(req.params.id);
+    const userId = req.userId; //softauth optional
+
+    try {
+        const comments = await prisma.comment.findMany({
+            where: { destinationId },
+            include: {
+                user: {
+                    select: { name: true, avatar: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        // map to include flags (true if the comment belongs to the loggedin user)
+        const result = comments.map((c) => ({
+            id: c.id,
+            text: c.text,
+            createdAt: c.createdAt,
+            user: c.user,
+            canDelete: userId ? c.userId === userId : false,
+        }));
+        res.json(result)
+    } catch (error) {
+        res.status(500).json({ error: "Could not fetch comments" })
+
+    }
+}

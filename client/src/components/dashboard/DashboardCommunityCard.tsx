@@ -6,6 +6,7 @@ import DestinationFormModal from "../destination/DestinationFormModal";
 import { useAuthStore } from "../../stores/authStore";
 import { useDestinationStore } from "../../stores/destinationStore";
 import { Pen, Trash2 } from "lucide-react";
+import CommentModal from '../comments/CommentModal';
 
 interface Props {
     destinations: Destination[];
@@ -28,6 +29,7 @@ export default function DashboardCommunityCard({
         null
     );
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [commentModalDest, setCommentModalDest] = useState<Destination | null>(null);
 
     const handleDelete = async (id: string) => {
         if (!user) return;
@@ -69,6 +71,7 @@ export default function DashboardCommunityCard({
                             <div>
                                 <h2 className="text-5xl font-black mt-2">{ride.name}</h2>
                                 <p className="text-gray-600 mt-6 leading-8">{ride.address}</p>
+                                <p className="text-gray-600 mt-4">{ride.description}</p>
 
                                 {/* Star Rating */}
                                 <div className="mt-4">
@@ -92,20 +95,18 @@ export default function DashboardCommunityCard({
                                     initialLiked={ride.userLiked ?? false}
                                     initialLikeCount={ride.likeCount}
                                     commentCount={ride.commentCount}
-                                    onCommentClick={() =>
-                                        setCommentDestId(
-                                            ride.id === commentDestId ? null : ride.id
-                                        )
-                                    }
+                                    onCommentClick={() => setCommentModalDest(ride)}
                                 />
 
                                 {/* Comment section placeholder */}
-                                {commentDestId === ride.id && (
-                                    <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                                        <p className="text-sm text-gray-500">Comments coming soon</p>
-                                    </div>
+                                {commentModalDest && (
+                                    <CommentModal
+                                        destinationId={commentModalDest.id}
+                                        destinationName={commentModalDest.name}
+                                        destinationImage={getImageUrl(commentModalDest)}
+                                        onClose={() => setCommentModalDest(null)}
+                                    />
                                 )}
-
                                 <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
                                     View Full Route
                                 </button>
@@ -121,7 +122,7 @@ export default function DashboardCommunityCard({
                                             className="flex items-center space-x-2 bg-white hover:bg-orange-50 text-orange-500 px-4 py-2 rounded-xl transition"
                                         >
                                             <Pen size={18} />
-                                            <span>Edit Route</span>
+
                                         </button>
 
                                         <button
@@ -129,7 +130,7 @@ export default function DashboardCommunityCard({
                                             className="flex items-center space-x-2 bg-white hover:bg-red-50 text-red-500 px-4 py-2 rounded-xl transition"
                                         >
                                             <Trash2 size={18} />
-                                            <span>Delete Route</span>
+
                                         </button>
                                     </div>
                                 )}

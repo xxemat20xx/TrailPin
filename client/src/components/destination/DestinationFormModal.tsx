@@ -4,11 +4,11 @@ import type { Destination } from "../../api/destination";
 import { useDestinationStore } from "../../stores/destinationStore";
 import { useAuthStore } from "../../stores/authStore";
 import { useNavigate } from "react-router-dom";
-import { addPhoto } from "../../api/destination";
+import { addPhoto, deletePhoto } from "../../api/destination";
 
 interface Prediction {
     place_id: string;
-    description: string;   // the full suggestion text
+    description: string;
     structured_formatting?: {
         main_text: string;
         secondary_text: string;
@@ -45,11 +45,14 @@ export default function DestinationFormModal({
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Existing photos (for edit mode)
+    const [existingPhotos, setExistingPhotos] = useState<
+        { id: string; url: string; caption?: string }[]
+    >([]);
+
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-
 
     // Prefill form when editing
     useEffect(() => {
@@ -60,10 +63,11 @@ export default function DestinationFormModal({
             setLatitude(String(destination.latitude));
             setLongitude(String(destination.longitude));
             setQuery(destination.address || "");
+            setExistingPhotos(destination.photos || []);
         }
     }, [mode, destination]);
 
-    // Address search with debounce
+    // Address search with debounce (unchanged)
     useEffect(() => {
         if (query.trim().length < 3) {
             setPredictions([]);
@@ -76,8 +80,8 @@ export default function DestinationFormModal({
             setIsSearching(true);
             try {
                 const res = await fetch(`/api/places/autocomplete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ input: query }),
                 });
                 const data = await res.json();
@@ -86,7 +90,7 @@ export default function DestinationFormModal({
                     setShowSuggestions(true);
                 }
             } catch (err) {
-                console.error('Autocomplete failed', err);
+                console.error("Autocomplete failed", err);
             } finally {
                 setIsSearching(false);
             }
@@ -111,7 +115,7 @@ export default function DestinationFormModal({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Cleanup photo preview URL
+    // Cleanup photo preview URL (only one useEffect needed)
     useEffect(() => {
         return () => {
             if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -121,10 +125,12 @@ export default function DestinationFormModal({
     const selectSuggestion = async (prediction: Prediction) => {
         setShowSuggestions(false);
         setQuery(prediction.description);
-        setIsSearching(true); // show spinner while fetching details
+        setIsSearching(true);
 
         try {
-            const res = await fetch(`/api/places/details?place_id=${prediction.place_id}`);
+            const res = await fetch(
+                `/api/places/details?place_id=${prediction.place_id}`
+            );
             const place = await res.json();
 
             if (place.error) {
@@ -132,18 +138,21 @@ export default function DestinationFormModal({
                 return;
             }
 
-            setName(place.name || prediction.structured_formatting?.main_text || prediction.description.split(',')[0]);
+            setName(
+                place.name ||
+                prediction.structured_formatting?.main_text ||
+                prediction.description.split(",")[0]
+            );
             setAddress(place.address);
             setLatitude(String(place.latitude));
             setLongitude(String(place.longitude));
-            setError('');
+            setError("");
         } catch (err) {
-            setError('Could not fetch place details');
+            setError("Could not fetch place details");
         } finally {
             setIsSearching(false);
         }
     };
-
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
@@ -162,7 +171,18 @@ export default function DestinationFormModal({
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const handleSubmit = async (e: any) => {
+    // Delete an existing photo (edit mode)
+    const handleDeleteExistingPhoto = async (photoId: string) => {
+        if (!destination) return;
+        try {
+            await deletePhoto(destination.id, photoId);
+            setExistingPhotos((prev) => prev.filter((p) => p.id !== photoId));
+        } catch (error) {
+            setError("Could not delete photo");
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) {
             navigate("/login?redirect=/dashboard");
@@ -197,6 +217,13 @@ export default function DestinationFormModal({
                     address: address || undefined,
                     description: description || undefined,
                 });
+                // Upload new photo if selected
+                if (photoFile) {
+                    const formData = new FormData();
+                    formData.append("photo", photoFile);
+                    formData.append("caption", "");
+                    await addPhoto(destination.id, formData);
+                }
             }
             fetchDestinations();
             onClose();
@@ -272,10 +299,12 @@ export default function DestinationFormModal({
                                         className="px-3 py-2 hover:bg-indigo-50 cursor-pointer text-sm"
                                     >
                                         <div className="font-medium">
-                                            {p.structured_formatting?.main_text || p.description.split(',')[0]}
+                                            {p.structured_formatting?.main_text ||
+                                                p.description.split(",")[0]}
                                         </div>
                                         <div className="text-xs text-gray-500">
-                                            {p.structured_formatting?.secondary_text || p.description}
+                                            {p.structured_formatting?.secondary_text ||
+                                                p.description}
                                         </div>
                                     </li>
                                 ))}
@@ -338,50 +367,75 @@ export default function DestinationFormModal({
                         </div>
                     )}
 
-                    {/* Photo Upload (only add mode) */}
-                    {isAdd && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Photo
-                            </label>
-                            {photoPreview ? (
-                                <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 p-2">
-                                    <img
-                                        src={photoPreview}
-                                        alt="Preview"
-                                        className="w-full h-40 object-cover rounded-lg"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={clearPhoto}
-                                        className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors text-red-500"
+                    {/* Photo Section (works for both add and edit) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Photos
+                        </label>
+
+                        {/* Existing photos (edit mode only) */}
+                        {mode === "edit" && existingPhotos.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                {existingPhotos.map((photo) => (
+                                    <div
+                                        key={photo.id}
+                                        className="relative rounded-lg overflow-hidden border border-gray-200"
                                     >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 hover:border-indigo-300 transition-colors cursor-pointer group"
+                                        <img
+                                            src={photo.url}
+                                            alt={photo.caption || "Destination photo"}
+                                            className="w-full h-24 object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteExistingPhoto(photo.id)}
+                                            className="absolute top-1 right-1 p-1 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors text-red-500"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* New photo upload / preview */}
+                        {photoPreview ? (
+                            <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 p-2">
+                                <img
+                                    src={photoPreview}
+                                    alt="Preview"
+                                    className="w-full h-40 object-cover rounded-lg"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={clearPhoto}
+                                    className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors text-red-500"
                                 >
-                                    <ImagePlus className="w-8 h-8 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-                                    <span className="text-sm text-gray-500 group-hover:text-indigo-600">
-                                        Click to upload a photo
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                        JPEG, PNG up to 5MB
-                                    </span>
-                                </div>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="hidden"
-                            />
-                        </div>
-                    )}
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 hover:border-indigo-300 transition-colors cursor-pointer group"
+                            >
+                                <ImagePlus className="w-8 h-8 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                                <span className="text-sm text-gray-500 group-hover:text-indigo-600">
+                                    {mode === "edit" ? "Add another photo" : "Click to upload a photo"}
+                                </span>
+                                <span className="text-xs text-gray-400">
+                                    JPEG, PNG up to 5MB
+                                </span>
+                            </div>
+                        )}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4 border-t border-gray-100">

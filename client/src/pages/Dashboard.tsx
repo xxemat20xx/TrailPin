@@ -38,7 +38,7 @@ export default function Dashboard() {
     fetchUsers();
   }, []);
 
-  console.log(destinations)
+
 
   const userCount = users.length;
   const destCount = destinations.length;

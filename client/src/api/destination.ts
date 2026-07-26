@@ -6,9 +6,11 @@ export interface Destination {
     latitude: number;
     longitude: number;
     address?: string;
-    description?
+    description?: string;
     userId?: string;
     averageRating?: number | null;
+    ratingsCount?: number;
+    userRating?: number | null;
     user?: { name: string; avatar: string };
     createdAt?: Date;
     photos: { id: string; url: string; caption?: string }[];

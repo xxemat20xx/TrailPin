@@ -1,20 +1,33 @@
+import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { rateDestination } from '../../api/rating';
-import { useState } from 'react';
 
 interface Props {
     destinationId: string;
     initialAverage: number | null;
-    initialCount: number;
+    ratingsCount: number;
+    userRating: number | null;
 }
 
-export default function StarRating({ destinationId, initialAverage, initialCount }: Props) {
+export default function StarRating({
+    destinationId,
+    initialAverage,
+    ratingsCount,
+    userRating,
+}: Props) {
     const { user } = useAuthStore();
     const [hover, setHover] = useState(0);
-    const [selected, setSelected] = useState(0); // user's own rating
+    const [selected, setSelected] = useState<number>(userRating ?? 0);
     const [average, setAverage] = useState(initialAverage);
-    const [count, setCount] = useState(initialCount);
+    const [count, setCount] = useState(ratingsCount);
+
+    // Sync when props change
+    useEffect(() => {
+        setSelected(userRating ?? 0);
+        setAverage(initialAverage);
+        setCount(ratingsCount);
+    }, [userRating, initialAverage, ratingsCount]);
 
     const handleRate = async (score: number) => {
         if (!user) return;
@@ -24,9 +37,14 @@ export default function StarRating({ destinationId, initialAverage, initialCount
             setAverage(res.data.average);
             setCount(res.data.count);
         } catch (err) {
-            // rollback
+            // ignore
         }
     };
+
+    // Determine how many stars to fill:
+    // - If user has rated (selected > 0): fill `selected` stars
+    // - Else if average exists: fill rounded average stars (to show the overall rating)
+    const filledStars = selected > 0 ? selected : (average ? Math.round(average) : 0);
 
     const stars = [1, 2, 3, 4, 5];
 
@@ -39,18 +57,22 @@ export default function StarRating({ destinationId, initialAverage, initialCount
                     onMouseEnter={() => user && setHover(star)}
                     onMouseLeave={() => setHover(0)}
                     disabled={!user}
-                    className={`${!user ? 'cursor-not-allowed opacity-60' : ''}`}
+                    className={`${!user ? 'cursor-default' : ''}`}
                     title={user ? 'Rate this place' : 'Log in to rate'}
                 >
                     <Star
-                        className={`w-5 h-5 ${(hover || selected) >= star
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                        className={`w-5 h-5 ${
+                            // While hovering (and user logged in) show potential rating
+                            user && hover >= star
+                                ? 'text-yellow-400 fill-current'
+                                : filledStars >= star
+                                    ? 'text-yellow-400 fill-current'   // always fill based on filledStars
+                                    : 'text-gray-300'
                             }`}
                     />
                 </button>
             ))}
-            {average && (
+            {average !== null && (
                 <span className="text-sm text-gray-600 ml-1">
                     {average.toFixed(1)} ({count})
                 </span>

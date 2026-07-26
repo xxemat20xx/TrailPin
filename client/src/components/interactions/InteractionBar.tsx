@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, MessageCircle } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { likeDestination } from '../../api/destination';
@@ -22,14 +22,20 @@ export default function InteractionBar({
     const [liked, setLiked] = useState(initialLiked);
     const [likeCount, setLikeCount] = useState(initialLikeCount);
 
+    // Sync when props change
+    useEffect(() => {
+        setLiked(initialLiked);
+        setLikeCount(initialLikeCount);
+    }, [initialLiked, initialLikeCount]);
+
     const handleLike = async () => {
         if (!user) return;
         try {
             const res = await likeDestination(destinationId);
             setLiked(res.data.liked);
-            setLikeCount(prev => (res.data.liked ? prev + 1 : prev - 1));
+            setLikeCount((prev) => (res.data.liked ? prev + 1 : prev - 1));
         } catch (err) {
-            // keep old state
+            // ignore or revert
         }
     };
 

@@ -1,7 +1,11 @@
+import { useState } from "react";
 import type { Destination } from "../../api/destination";
 import InteractionBar from "../interactions/InteractionBar";
 import StarRating from "../interactions/starRating";
-import { useState } from "react";
+import DestinationFormModal from "../destination/DestinationFormModal";
+import { useAuthStore } from "../../stores/authStore";
+import { useDestinationStore } from "../../stores/destinationStore";
+import { Pen, Trash2 } from "lucide-react";
 
 interface Props {
     destinations: Destination[];
@@ -16,7 +20,24 @@ export default function DashboardCommunityCard({
     destinations,
     searchQuery,
 }: Props) {
+    const { user } = useAuthStore();
+    const { removeDestination } = useDestinationStore();
+
     const [commentDestId, setCommentDestId] = useState<string | null>(null);
+    const [editDestination, setEditDestination] = useState<Destination | null>(
+        null
+    );
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const handleDelete = async (id: string) => {
+        if (!user) return;
+        try {
+            await removeDestination(id);
+            // Optional: show success toast
+        } catch (error) {
+            console.error("Delete failed:", error);
+        }
+    };
 
     const filtered = destinations.filter((d) => {
         if (!searchQuery.trim()) return true;
@@ -31,64 +52,104 @@ export default function DashboardCommunityCard({
         <div className="mt-16">
             <h2 className="text-3xl font-bold mb-8">🏍 Community Rides</h2>
             <div className="space-y-12">
-                {filtered.map((ride, index) => (
-                    <div
-                        key={ride.id}
-                        className={`grid lg:grid-cols-2 gap-10 items-center ${index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
-                            }`}
-                    >
-                        <img
-                            src={getImageUrl(ride)}
-                            className="rounded-3xl h-96 w-full object-cover shadow-lg"
-                            alt={ride.name}
-                        />
-                        <div>
-                            <h2 className="text-5xl font-black mt-2">{ride.name}</h2>
-                            <p className="text-gray-600 mt-6 leading-8">{ride.address}</p>
+                {filtered.map((ride, index) => {
+                    const isOwner = user?.id === ride.userId;
 
-                            {/* Star Rating */}
-                            <div className="mt-4">
-                                <StarRating
-                                    destinationId={ride.id}
-                                    initialAverage={ride.averageRating ?? null}
-                                    initialCount={ride.likeCount} // or you may have a separate `totalRatings` field; adjust accordingly
-                                />
-                            </div>
-
-                            <p className="text-orange-500 font-semibold mt-2">
-                                <em className="text-slate-600">
-                                    Shared by {ride.user?.name ?? "Unknown rider"}
-                                </em>
-                            </p>
-
-                            {/* Interaction bar (likes / comments) */}
-                            <InteractionBar
-                                destinationId={ride.id}
-                                initialLiked={ride.userLiked ?? false}
-                                initialLikeCount={ride.likeCount}
-                                commentCount={ride.commentCount}
-                                onCommentClick={() =>
-                                    setCommentDestId(
-                                        ride.id === commentDestId ? null : ride.id
-                                    )
-                                }
+                    return (
+                        <div
+                            key={ride.id}
+                            className={`grid lg:grid-cols-2 gap-10 items-center ${index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
+                                }`}
+                        >
+                            <img
+                                src={getImageUrl(ride)}
+                                className="rounded-3xl h-96 w-full object-cover shadow-lg"
+                                alt={ride.name}
                             />
+                            <div>
+                                <h2 className="text-5xl font-black mt-2">{ride.name}</h2>
+                                <p className="text-gray-600 mt-6 leading-8">{ride.address}</p>
 
-                            {/* Optional: show comment section when selected */}
-                            {commentDestId === ride.id && (
-                                <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                                    {/* You can place a CommentSection component here */}
-                                    <p className="text-sm text-gray-500">Comments coming soon</p>
+                                {/* Star Rating */}
+                                <div className="mt-4">
+                                    <StarRating
+                                        destinationId={ride.id}
+                                        initialAverage={ride.averageRating ?? null}
+                                        ratingsCount={ride.ratingsCount ?? 0}
+                                        userRating={ride.userRating ?? null}
+                                    />
                                 </div>
-                            )}
 
-                            <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
-                                View Full Route
-                            </button>
+                                <p className="text-orange-500 font-semibold mt-2">
+                                    <em className="text-slate-600">
+                                        Shared by {ride.user?.name ?? "Unknown rider"}
+                                    </em>
+                                </p>
+
+                                {/* Interaction bar (likes / comments) */}
+                                <InteractionBar
+                                    destinationId={ride.id}
+                                    initialLiked={ride.userLiked ?? false}
+                                    initialLikeCount={ride.likeCount}
+                                    commentCount={ride.commentCount}
+                                    onCommentClick={() =>
+                                        setCommentDestId(
+                                            ride.id === commentDestId ? null : ride.id
+                                        )
+                                    }
+                                />
+
+                                {/* Comment section placeholder */}
+                                {commentDestId === ride.id && (
+                                    <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                                        <p className="text-sm text-gray-500">Comments coming soon</p>
+                                    </div>
+                                )}
+
+                                <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
+                                    View Full Route
+                                </button>
+
+                                {/* Owner actions */}
+                                {isOwner && (
+                                    <div className="flex space-x-2 mt-4">
+                                        <button
+                                            onClick={() => {
+                                                setEditDestination(ride);
+                                                setIsEditModalOpen(true);
+                                            }}
+                                            className="flex items-center space-x-2 bg-white hover:bg-orange-50 text-orange-500 px-4 py-2 rounded-xl transition"
+                                        >
+                                            <Pen size={18} />
+                                            <span>Edit Route</span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleDelete(ride.id)}
+                                            className="flex items-center space-x-2 bg-white hover:bg-red-50 text-red-500 px-4 py-2 rounded-xl transition"
+                                        >
+                                            <Trash2 size={18} />
+                                            <span>Delete Route</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
+
+            {/* Edit modal */}
+            {isEditModalOpen && editDestination && (
+                <DestinationFormModal
+                    mode="edit"
+                    destination={editDestination}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditDestination(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

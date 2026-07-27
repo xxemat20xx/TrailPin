@@ -25,6 +25,7 @@ model User {
   likes        Like[]
   comments     Comment[]
   ratings      Rating[]
+  itineraries  Itinerary[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,6 +44,7 @@ model Destination {
   comments Comment[]
   ratings  Rating[]
   likes    Like[]
+  stops    Stop[]
 
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -95,4 +97,26 @@ model Rating {
   updatedAt     DateTime    @updatedAt
 
   @@unique([userId, destinationId]) // one rating per user per destination
+}
+
+model Itinerary {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stops       Stop[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Stop {
+  id            String      @id @default(uuid())
+  order         Int
+  itineraryId   String
+  itinerary     Itinerary   @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }

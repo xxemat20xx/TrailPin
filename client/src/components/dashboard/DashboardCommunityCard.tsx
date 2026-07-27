@@ -6,6 +6,7 @@ import DestinationFormModal from "../destination/DestinationFormModal";
 import { useAuthStore } from "../../stores/authStore";
 import { useDestinationStore } from "../../stores/destinationStore";
 import { Pen, Trash2 } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import CommentModal from '../comments/CommentModal';
 
 interface Props {
@@ -24,7 +25,7 @@ export default function DashboardCommunityCard({
     const { user } = useAuthStore();
     const { removeDestination } = useDestinationStore();
 
-    const [commentDestId, setCommentDestId] = useState<string | null>(null);
+
     const [editDestination, setEditDestination] = useState<Destination | null>(
         null
     );
@@ -49,6 +50,7 @@ export default function DashboardCommunityCard({
             (d.address && d.address.toLowerCase().includes(q))
         );
     });
+    const navigate = useNavigate();
 
     return (
         <div className="mt-16">
@@ -107,7 +109,10 @@ export default function DashboardCommunityCard({
                                         onClose={() => setCommentModalDest(null)}
                                     />
                                 )}
-                                <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
+                                <button
+                                    onClick={() => navigate(`/itinerary/new?dest=${ride.id}`)}
+                                    className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition"
+                                >
                                     View Full Route
                                 </button>
 

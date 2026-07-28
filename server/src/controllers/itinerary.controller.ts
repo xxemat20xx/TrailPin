@@ -2,49 +2,76 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { getRoute } from '../services/routing.service';
 
+function secondsToTimeString(seconds: number): string {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const parts: string[] = [];
+  if (hrs > 0) parts.push(`${hrs} hr`);
+  if (mins > 0) parts.push(`${mins} min`);
+  return parts.join(' ') || '0 min';
+}
 // ---------- Create ----------
 export const createItinerary = async (req: Request, res: Response) => {
-    const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
-    const userId = req.userId!;
+   
+  const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
+  const userId = req.userId!;
 
-    if (!name || !Array.isArray(stops) || stops.length === 0) {
-        return res.status(400).json({ error: 'Name and at least one stop are required' });
-    }
+  if (!name || !Array.isArray(stops) || stops.length === 0) {
+    return res.status(400).json({ error: 'Name and at least one stop are required' });
+  }
 
+  // Default values
+  let finalDistance = totalDistance ?? null;
+  let finalTime = estimatedTime ?? null;
+
+  // Auto‑calculate route if possible
+  if (stops.length >= 2) {
     try {
-        const itinerary = await prisma.itinerary.create({
-            data: {
-                name,
-                description,
-                coverPhoto,
-                estimatedTime,
-                totalDistance,
-                difficulty,
-                tags,
-                visibility: visibility || 'public',
-                userId,
-                stops: {
-                    create: stops.map((s: any) => ({
-                        order: s.order,
-                        name: s.name,
-                        latitude: s.latitude,
-                        longitude: s.longitude,
-                        address: s.address,
-                        description: s.description,
-                        arrivalNotes: s.arrivalNotes,
-                        estimatedStay: s.estimatedStay,
-                    })),
-                },
-            },
-            include: { stops: { include: { photos: true }, orderBy: { order: 'asc' } } },
-        });
-        res.status(201).json(itinerary);
-    } catch (error) {
-        console.error('Create itinerary error:', error);
-        res.status(500).json({ error: 'Failed to create itinerary' });
+      const coordinates = stops.map((s: any) => ({ lat: s.latitude, lng: s.longitude }));
+    const route = await getRoute(coordinates);
+   
+      
+      finalDistance = route.distance / 1000;     // meters → km
+      finalTime = secondsToTimeString(route.duration);
+    } catch (err) {
+      console.warn('Could not calculate route for itinerary, using null values');
+      // keep null
     }
-};
+  }
 
+  try {
+    const itinerary = await prisma.itinerary.create({
+      data: {
+        name,
+        description,
+        coverPhoto,
+        estimatedTime: finalTime,
+        totalDistance: finalDistance,
+        difficulty,
+        tags,
+        visibility: visibility || 'public',
+        userId,
+        stops: {
+          create: stops.map((s: any) => ({
+            order: s.order,
+            name: s.name,
+            latitude: s.latitude,
+            longitude: s.longitude,
+            address: s.address,
+            description: s.description,
+            arrivalNotes: s.arrivalNotes,
+            estimatedStay: s.estimatedStay,
+          })),
+        },
+      },
+      include: { stops: { include: { photos: true }, orderBy: { order: 'asc' } } },
+    });
+    res.status(201).json(itinerary);
+  } catch (error) {
+    console.error('Create itinerary error:', error);
+    res.status(500).json({ error: 'Failed to create itinerary' });
+  }
+};
 // ---------- Get all for current user ----------
 export const getUserItineraries = async (req: Request, res: Response) => {
     const userId = req.userId!;
@@ -84,43 +111,59 @@ export const getItinerary = async (req: Request, res: Response) => {
 
 // ---------- Update ----------
 export const updateItinerary = async (req: Request, res: Response) => {
-    const id = String(req.params.id);
-    const userId = req.userId!;
-    const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
+  const id = String(req.params.id);
+  const userId = req.userId!;
+  const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
 
-    const existing = await prisma.itinerary.findFirst({ where: { id, userId } });
-    if (!existing) return res.status(404).json({ error: 'Itinerary not found' });
+  const existing = await prisma.itinerary.findFirst({ where: { id, userId } });
+  if (!existing) return res.status(404).json({ error: 'Itinerary not found' });
 
-    // Delete old stops and recreate
-    await prisma.stop.deleteMany({ where: { itineraryId: id } });
+  // Determine new distance & time – reuse provided values or auto‑calculate
+  let finalDistance = totalDistance !== undefined ? totalDistance : existing.totalDistance;
+  let finalTime = estimatedTime !== undefined ? estimatedTime : existing.estimatedTime;
 
-    const updated = await prisma.itinerary.update({
-        where: { id },
-        data: {
-            name: name ?? existing.name,
-            description: description !== undefined ? description : existing.description,
-            coverPhoto: coverPhoto !== undefined ? coverPhoto : existing.coverPhoto,
-            estimatedTime: estimatedTime !== undefined ? estimatedTime : existing.estimatedTime,
-            totalDistance: totalDistance !== undefined ? totalDistance : existing.totalDistance,
-            difficulty: difficulty !== undefined ? difficulty : existing.difficulty,
-            tags: tags !== undefined ? tags : existing.tags,
-            visibility: visibility !== undefined ? visibility : existing.visibility,
-            stops: stops ? {
-                create: stops.map((s: any) => ({
-                    order: s.order,
-                    name: s.name,
-                    latitude: s.latitude,
-                    longitude: s.longitude,
-                    address: s.address,
-                    description: s.description,
-                    arrivalNotes: s.arrivalNotes,
-                    estimatedStay: s.estimatedStay,
-                })),
-            } : undefined,
-        },
-        include: { stops: { include: { photos: true }, orderBy: { order: 'asc' } } },
-    });
-    res.json(updated);
+  // If new stops provided, recalculate if possible
+  if (stops && stops.length >= 2) {
+    try {
+      const coordinates = stops.map((s: any) => ({ lat: s.latitude, lng: s.longitude }));
+      const route = await getRoute(coordinates);
+      finalDistance = route.distance / 1000;
+      finalTime = secondsToTimeString(route.duration);
+    } catch (err) {
+      console.warn('Could not recalculate route, keeping existing values');
+    }
+  }
+
+  // Delete old stops and recreate
+  await prisma.stop.deleteMany({ where: { itineraryId: id } });
+
+  const updated = await prisma.itinerary.update({
+    where: { id },
+    data: {
+      name: name ?? existing.name,
+      description: description !== undefined ? description : existing.description,
+      coverPhoto: coverPhoto !== undefined ? coverPhoto : existing.coverPhoto,
+      estimatedTime: finalTime,
+      totalDistance: finalDistance,
+      difficulty: difficulty !== undefined ? difficulty : existing.difficulty,
+      tags: tags !== undefined ? tags : existing.tags,
+      visibility: visibility !== undefined ? visibility : existing.visibility,
+      stops: stops ? {
+        create: stops.map((s: any) => ({
+          order: s.order,
+          name: s.name,
+          latitude: s.latitude,
+          longitude: s.longitude,
+          address: s.address,
+          description: s.description,
+          arrivalNotes: s.arrivalNotes,
+          estimatedStay: s.estimatedStay,
+        })),
+      } : undefined,
+    },
+    include: { stops: { include: { photos: true }, orderBy: { order: 'asc' } } },
+  });
+  res.json(updated);
 };
 
 // ---------- Delete ----------

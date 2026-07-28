@@ -11,3 +11,4 @@ export const deleteItinerary = (id: string) => apiClient.delete(`/itineraries/${
 export const calculateRoute = (coordinates: { lat: number; lng: number }[]) =>
   apiClient.post('/itineraries/calculate-route', { coordinates });
 
+export const getPublicItineraries = () => apiClient.get('/public/itineraries');

@@ -8,7 +8,8 @@ import authRoutes from './routes/auth.routes';
 import { router as destinationRoutes, publicRouter as publicDestinationRoutes } from './routes/destination.routes';
 import placesRoutes from './routes/places.routes';
 import cloudinary from './config/cloudinary';   // now env is loaded
-import itineraryRoutes from './routes/itinerary.routes';
+import { router as itineraryRoutes, publicItineraryRouter as publicItineraryRoutes } from './routes/itinerary.routes';
+
 
 const app = express();
 
@@ -24,10 +25,11 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/destinations', destinationRoutes);
-app.use('/api/public/destinations', publicDestinationRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/itineraries', itineraryRoutes);
 
+app.use('/api/public/destinations', publicDestinationRoutes);
+app.use('/api/public/itineraries', publicItineraryRoutes);
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ message: 'Server is running' });

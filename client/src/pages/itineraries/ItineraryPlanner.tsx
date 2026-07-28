@@ -128,10 +128,10 @@ export default function ItineraryPlanner() {
     try {
       if (id) {
         await updateItinerary(id, payload);
-        navigate(`/itinerary/${id}`);
+        navigate(`/itineraries/${id}`);
       } else {
         const res = await createItinerary(payload);
-        navigate(`/itinerary/${res.data.id}`);
+        navigate(`/itineraries/${res.data.id}`);
       }
     } finally {
       setSaving(false);
@@ -257,7 +257,7 @@ export default function ItineraryPlanner() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Weekend in Kyoto"
+              placeholder="e.g. Ride to Infanta Quezon"
               className={inputCls}
             />
 
@@ -267,7 +267,7 @@ export default function ItineraryPlanner() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="What makes this trip special?"
+                placeholder="Share your trip details, notes, or tips for others."
                 className={`${inputCls} resize-none`}
               />
             </div>

@@ -18,8 +18,12 @@ export default function Navbar() {
   const { user, logout } = useAuthStore();
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-
+  
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // avatar image url
+  const avatarUrl = user?.avatar || "https://via.placeholder.com/150";
+  
 
   const handleLogout = async () => {
     await logout();
@@ -110,7 +114,7 @@ export default function Navbar() {
           {user && (
             <>
               <Link
-                to="/create"
+                to="/itineraries/new"
                 className="
                 flex items-center gap-2
                 text-gray-300
@@ -152,17 +156,18 @@ export default function Navbar() {
                 onClick={() => navigate("/profile")}
                 className="
                 flex items-center gap-2
-                bg-orange-400/10
-                border border-orange-400/30
-                px-3 py-2
-                rounded-xl
-                hover:bg-orange-400/20
+                text-gray-300
+                hover:text-white
                 transition
+                cursor-pointer
+                
                 "
               >
-                <CircleUserRound
-                  className="text-orange-400"
-                  size={20}
+              
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-6 h-6 rounded-full"
                 />
 
                 <span className="text-gray-200 text-sm">

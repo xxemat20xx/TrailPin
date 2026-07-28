@@ -10,7 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import MainLayout from "./layouts/MainLayout";
 
 import ItineraryPlanner from "./pages/itineraries/ItineraryPlanner";
+import ItineraryDetail from "./pages/itineraries/ItineraryDetails";
 
+import ProfilePage from "./pages/profile/ProfilePage";
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -25,13 +27,14 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/itineraries/:id" element={<ItineraryPlanner />} />
+      <Route path="/itineraries/:id" element={<ItineraryDetail />} />
       <Route path="/itineraries/new" element={<ItineraryPlanner />} />
 
       {/* Pages WITH navbar */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
     </Routes>
   );

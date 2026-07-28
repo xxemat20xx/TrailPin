@@ -7,6 +7,7 @@ import {
   Heart,
   MessageCircle,
 } from "lucide-react";
+import { getPublicItineraries } from '../api/itinerary';
 import { useAuthStore } from "../stores/authStore";
 import { useDestinationStore } from "../stores/destinationStore";
 import { useEffect, useState } from "react";
@@ -14,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import DestinationFormModal from '../components/destination/DestinationFormModal';
 import type { Destination } from "../api/destination";
 import DashboardCommunityCard from '../components/dashboard/DashboardCommunityCard';
+
 
 export default function Dashboard() {
   const {
@@ -26,11 +28,12 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-
+  const [itineraries, setItineraries] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDestinations();
     fetchUsers();
+    getPublicItineraries().then(res => setItineraries(res.data)).catch(console.error);
   }, []);
 
 
@@ -97,10 +100,41 @@ export default function Dashboard() {
 
           <div className="bg-white rounded-2xl p-6 shadow">
             <Route className="text-orange-400 mb-3" />
-            <h2 className="text-3xl font-bold">890</h2>
+            <h2 className="text-3xl font-bold">{itineraries.length}</h2>
             <p className="text-gray-500">Routes Shared</p>
           </div>
         </div>
+
+    {/* Itineraries Section */}
+      <div className="mt-12">
+        <h2 className="text-3xl font-bold mb-6">🗺️ Community Itineraries</h2>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {itineraries.slice(0, 6).map((itin) => (
+            <div
+              key={itin.id}
+              className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden cursor-pointer"
+              onClick={() => navigate(`/itineraries/${itin.id}`)}
+            >
+              {/* Cover image or first stop photo */}
+              <img
+                src={itin.coverPhoto || itin.stops[0]?.photos[0]?.url || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200'}
+                className="h-40 w-full object-cover"
+                alt={itin.name}
+              />
+              <div className="p-4">
+                <h3 className="font-bold text-lg">{itin.name}</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {itin.stops.length} stops · {itin.estimatedTime || '—'}
+                </p>
+                <div className="flex items-center mt-2 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {itin.stops[0]?.name || 'Unknown start'}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
         {/* Featured */}
         {/* <div className="mt-12">
@@ -150,14 +184,14 @@ export default function Dashboard() {
         </div> */}
 
         {/* COMMUNITY */}
-        <DashboardCommunityCard
+        {/* <DashboardCommunityCard
           destinations={destinations}
           searchQuery={searchQuery}
 
-        />
+        /> */}
 
         {/* Floating Button */}
-        <button onClick={() => handleAddDestination()}
+        <button onClick={() => navigate('/itineraries/new')}
           className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition">
           +
         </button>

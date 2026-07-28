@@ -6,20 +6,17 @@ import {
     getItinerary,
     updateItinerary,
     deleteItinerary,
-    getItineraryRoute,
     calculateRoute,
 } from '../controllers/itinerary.controller';
 
 const router = Router();
-
-router.use(authenticate); // all routes require login
+router.use(authenticate);
 
 router.post('/', createItinerary);
 router.get('/', getUserItineraries);
 router.get('/:id', getItinerary);
 router.put('/:id', updateItinerary);
 router.delete('/:id', deleteItinerary);
-router.get('/:id/route', getItineraryRoute);
-router.post('/calculate-route', authenticate, calculateRoute);
+router.post('/calculate-route', calculateRoute);
 
 export default router;

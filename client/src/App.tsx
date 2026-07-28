@@ -11,6 +11,7 @@ import MainLayout from "./layouts/MainLayout";
 
 import ItineraryPlanner from "./pages/itineraries/ItineraryPlanner";
 
+
 function App() {
   const { checkAuth } = useAuthStore();
 
@@ -24,8 +25,9 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/itinerary/new" element={<ItineraryPlanner />} />
-      <Route path="/itinerary/:id" element={<ItineraryPlanner />} />
+      <Route path="/itineraries/:id" element={<ItineraryPlanner />} />
+      <Route path="/itineraries/new" element={<ItineraryPlanner />} />
+
       {/* Pages WITH navbar */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Dashboard />} />

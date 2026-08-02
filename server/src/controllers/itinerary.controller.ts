@@ -257,3 +257,55 @@ export const calculateRoute = async (req: Request, res: Response) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// upload stop photo
+export const uploadStopPhoto = async (req: Request, res: Response) => {
+  const itineraryId = String(req.params.itineraryId);
+  const stopId = String(req.params.stopId);
+  const userId = req.userId!;
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  // verify the stop belongs to the user
+   const stop = await prisma.stop.findFirst({
+    where: {
+      id: stopId,
+      itineraryId,
+      itinerary: { userId },
+    },
+  });
+  if (!stop) {
+    return res.status(404).json({ error: 'Stop not found or does not belong to user' });
+  }
+    try {
+      // Upload to Cloudinary
+      const result = await new Promise<any>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'trailpin_stop_photos', resource_type: 'image' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(file.buffer);
+      });
+
+      const photo = await prisma.stopPhoto.create({
+        data: {
+          url: result.secure_url,
+          public_id: result.public_id,
+          caption: req.body.caption || null,
+          stopId,
+        },
+      });
+
+      res.status(201).json(photo);
+    } catch (error) {
+      console.error('Stop photo upload error:', error);
+      res.status(500).json({ error: 'Failed to upload photo' });
+    }
+}
+

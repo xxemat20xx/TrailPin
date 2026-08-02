@@ -86,3 +86,26 @@ export const getComments = async (req: Request, res: Response) => {
 
     }
 }
+
+
+export const toggleItineraryLike = async (req: Request, res: Response) => {
+  const itineraryId = String(req.params.id);
+  const userId = req.userId!;
+
+  try {
+    const existing = await prisma.like.findUnique({
+      where: { userId_itineraryId: { userId, itineraryId } },
+    });
+
+    if (existing) {
+      await prisma.like.delete({ where: { id: existing.id } });
+      return res.json({ liked: false });
+    }
+
+    await prisma.like.create({ data: { userId, itineraryId } });
+    res.json({ liked: true });
+  } catch (error) {
+    console.error('Toggle like error:', error);
+    res.status(500).json({ error: 'Failed to toggle like' });
+  }
+};

@@ -28,3 +28,10 @@ export const calculateRoute = (coordinates: { lat: number; lng: number }[]) =>
 export const getPublicItineraries = () => apiClient.get('/public/itineraries');
 export const getPublicItinerary = (id: string) =>
   apiClient.get(`/public/itineraries/${id}`);
+
+export const likeItinerary = (id: string) => apiClient.post(`/itineraries/${id}/like`);
+
+export const uploadStopPhoto = (itineraryId: string, stopId: string, formData: FormData) =>
+  apiClient.post(`/itineraries/${itineraryId}/stops/${stopId}/photos`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });

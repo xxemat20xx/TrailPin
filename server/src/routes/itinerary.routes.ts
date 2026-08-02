@@ -7,8 +7,10 @@ import {
     updateItinerary,
     deleteItinerary,
     calculateRoute,
+    uploadStopPhoto
 } from '../controllers/itinerary.controller';
 import { softAuth } from '../middleware/softAuth';
+import { toggleItineraryLike } from '../controllers/interaction.controller';
 import prisma from '../config/db';
 import multer from 'multer';
 
@@ -18,13 +20,17 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.use(authenticate);
 publicItineraryRouter.use(softAuth);
 
-
+router.post('/:itineraryId/stops/:stopId/photos', upload.single('photo'), uploadStopPhoto);
 router.post('/', upload.single('coverPhoto'), createItinerary);
 router.get('/', getUserItineraries);
 router.get('/:id', getItinerary);
 router.put('/:id', upload.single('coverPhoto'), updateItinerary);
 router.delete('/:id', deleteItinerary);
 router.post('/calculate-route', calculateRoute);
+
+
+// interaction routes (like/unlike, comments) are handled in interaction.routes.ts
+router.post('/:id/like', toggleItineraryLike);
 
 
 // Get all public itineraries (with stops, like count, etc.)

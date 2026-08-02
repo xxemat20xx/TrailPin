@@ -13,6 +13,7 @@ import ItineraryPlanner from "./pages/itineraries/ItineraryPlanner";
 import ItineraryDetail from "./pages/itineraries/ItineraryDetails";
 
 import ProfilePage from "./pages/profile/ProfilePage";
+import MyItineraries from './pages/itineraries/MyItineraries';
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -35,6 +36,7 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/my-itineraries" element={<MyItineraries />} />
       </Route>
     </Routes>
   );

@@ -6,7 +6,6 @@ import {
   UserPlus,
   LogOut,
   MapPin,
-  CircleUserRound,
   Compass,
   Plus,
   Menu,
@@ -128,14 +127,14 @@ export default function Navbar() {
 
 
               <Link
-                to="/trips"
+                to="/my-itineraries"
                 className="
                 text-gray-300
                 hover:text-white
                 transition
                 "
               >
-                My Trips
+                My Itineraries
               </Link>
             </>
           )}

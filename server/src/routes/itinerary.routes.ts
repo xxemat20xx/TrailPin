@@ -10,17 +10,19 @@ import {
 } from '../controllers/itinerary.controller';
 import { softAuth } from '../middleware/softAuth';
 import prisma from '../config/db';
+import multer from 'multer';
 
 export const router = Router();
 export const publicItineraryRouter = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 router.use(authenticate);
 publicItineraryRouter.use(softAuth);
 
 
-router.post('/', createItinerary);
+router.post('/', upload.single('coverPhoto'), createItinerary);
 router.get('/', getUserItineraries);
 router.get('/:id', getItinerary);
-router.put('/:id', updateItinerary);
+router.put('/:id', upload.single('coverPhoto'), updateItinerary);
 router.delete('/:id', deleteItinerary);
 router.post('/calculate-route', calculateRoute);
 
@@ -35,8 +37,12 @@ publicItineraryRouter.get('/', async (req, res) => {
         stops: { include: { photos: true }, orderBy: { order: 'asc' } },
         user: { select: { id: true, name: true, avatar: true } },
         _count: { select: { likes: true, comments: true, ratings: true } },
-        likes: userId ? { where: { userId }, select: { id: true } } : false,
-        ratings: userId ? { where: { userId }, select: { score: true } } : false,
+        ...(userId
+          ? {
+              likes: { where: { userId }, select: { id: true } },
+              ratings: { where: { userId }, select: { score: true } },
+            }
+          : {}),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -60,6 +66,55 @@ publicItineraryRouter.get('/', async (req, res) => {
   } catch (error) {
     console.error('Public itineraries error:', error);
     res.status(500).json({ error: 'Failed to fetch itineraries' });
+  }
+});
+// Get a single public itinerary (anyone can view)
+publicItineraryRouter.get('/:id', async (req, res) => {
+  const id = String(req.params.id);
+  const userId = req.userId;
+
+  try {
+    const itinerary = await prisma.itinerary.findFirst({
+      where: { id, visibility: 'public' },   // only public itineraries
+      include: {
+        stops: { include: { photos: true }, orderBy: { order: 'asc' } },
+        user: { select: { id: true, name: true, avatar: true } },
+        _count: { select: { likes: true, comments: true, ratings: true } },
+        ...(userId
+          ? {
+              likes: { where: { userId }, select: { id: true } },
+              ratings: { where: { userId }, select: { score: true } },
+            }
+          : {}),
+      },
+    });
+
+    if (!itinerary) return res.status(404).json({ error: 'Itinerary not found' });
+
+    // Clean up the response
+    const ratings: { score: number; userId: string }[] = itinerary.ratings || [];
+    const average = ratings.length > 0
+      ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
+      : null;
+    const userRating = userId ? ratings.find(r => r.userId === userId)?.score || null : null;
+
+    const result = {
+      ...itinerary,
+      likeCount: itinerary._count.likes,
+      commentCount: itinerary._count.comments,
+      ratingsCount: ratings.length,
+      averageRating: average,
+      userLiked: userId ? itinerary.likes?.length > 0 : false,
+      userRating,
+      _count: undefined,
+      likes: undefined,
+      ratings: undefined,
+    };
+
+    res.json(result);
+  } catch (error) {
+    console.error('Get public itinerary error:', error);
+    res.status(500).json({ error: 'Failed to fetch itinerary' });
   }
 });
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getItinerary, calculateRoute } from "../../api/itinerary";
+import { calculateRoute, getPublicItinerary } from "../../api/itinerary";
+
 import MapView from "../../components/MapView";
 import {
   ArrowLeft,
@@ -9,8 +10,7 @@ import {
   MapPin,
   User,
   Navigation,
-  Calendar,
-  ChevronRight,
+
 } from "lucide-react";
 
 export default function ItineraryDetail() {
@@ -21,12 +21,11 @@ export default function ItineraryDetail() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-
-    getItinerary(id)
-      .then((res) => setItinerary(res.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      if (!id) return;
+  getPublicItinerary(id)
+    .then((res) => setItinerary(res.data))
+    .catch(console.error)
+    .finally(() => setLoading(false));
   }, [id]);
 
   useEffect(() => {
@@ -289,7 +288,7 @@ export default function ItineraryDetail() {
                 if (stops.length === 0) return;
                 const origin = `${stops[0].latitude},${stops[0].longitude}`;
                 const destination = `${stops[stops.length - 1].latitude},${stops[stops.length - 1].longitude}`;
-                const waypoints = stops.slice(1, -1).map(s => `${s.latitude},${s.longitude}`).join('|');
+                const waypoints = stops.slice(1, -1).map((s: any) => `${s.latitude},${s.longitude}`).join('|');
                 const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
                 window.open(url, '_blank', 'noopener');
               }}

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { getRoute } from '../services/routing.service';
+import cloudinary from '../config/cloudinary';
 
 function secondsToTimeString(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
@@ -13,13 +14,46 @@ function secondsToTimeString(seconds: number): string {
 // ---------- Create ----------
 export const createItinerary = async (req: Request, res: Response) => {
    
-  const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
+  let { name, description, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
   const userId = req.userId!;
+
+  if(typeof stops === 'string'){
+    try{
+      stops = JSON.parse(stops);
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid stops format' });
+    }
+  }
+  if (typeof tags === 'string') {
+  try {
+    tags = JSON.parse(tags);
+  } catch {
+    tags = []; // or return error
+  }
+}
 
   if (!name || !Array.isArray(stops) || stops.length === 0) {
     return res.status(400).json({ error: 'Name and at least one stop are required' });
   }
-
+    let coverPhotoUrl: string | undefined;
+    if(req.file){
+          try {
+            const result = await new Promise<any>((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                { folder: 'trailpin_itineraries', resource_type: 'image' },
+                (error, result) => {
+                  if (error) reject(error);
+                  else resolve(result);
+                }
+              );
+              stream.end(req.file!.buffer);
+            });
+            coverPhotoUrl = result.secure_url;
+          } catch (err) {
+            console.error('Cover photo upload error:', err);
+            return res.status(500).json({ error: 'Failed to upload cover photo' });
+          }
+    }
   // Default values
   let finalDistance = totalDistance ?? null;
   let finalTime = estimatedTime ?? null;
@@ -44,7 +78,7 @@ export const createItinerary = async (req: Request, res: Response) => {
       data: {
         name,
         description,
-        coverPhoto,
+        coverPhoto: coverPhotoUrl || null,
         estimatedTime: finalTime,
         totalDistance: finalDistance,
         difficulty,
@@ -113,7 +147,22 @@ export const getItinerary = async (req: Request, res: Response) => {
 export const updateItinerary = async (req: Request, res: Response) => {
   const id = String(req.params.id);
   const userId = req.userId!;
-  const { name, description, coverPhoto, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
+  let { name, description, estimatedTime, totalDistance, difficulty, tags, visibility, stops } = req.body;
+  if(typeof stops === 'string'){
+    try{
+      stops = JSON.parse(stops);
+    }catch (err) {
+      return res.status(400).json({ error: 'Invalid stops format' });
+    }
+    if (typeof tags === 'string') {
+  try {
+    tags = JSON.parse(tags);
+  } catch {
+    tags = []; // or return error
+  }
+}
+
+
 
   const existing = await prisma.itinerary.findFirst({ where: { id, userId } });
   if (!existing) return res.status(404).json({ error: 'Itinerary not found' });
@@ -134,6 +183,25 @@ export const updateItinerary = async (req: Request, res: Response) => {
     }
   }
 
+  let coverPhotoUrl: string | undefined;
+  if(req.file){
+      try {
+            const result = await new Promise<any>((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                { folder: 'trailpin_itineraries', resource_type: 'image' },
+                (error, result) => {
+                  if (error) reject(error);
+                  else resolve(result);
+                }
+              );
+              stream.end(req.file!.buffer);
+            });
+            coverPhotoUrl = result.secure_url;
+          } catch (err) {
+            console.error('Cover photo upload error:', err);
+            return res.status(500).json({ error: 'Failed to upload cover photo' });
+          }
+      }
   // Delete old stops and recreate
   await prisma.stop.deleteMany({ where: { itineraryId: id } });
 
@@ -142,7 +210,7 @@ export const updateItinerary = async (req: Request, res: Response) => {
     data: {
       name: name ?? existing.name,
       description: description !== undefined ? description : existing.description,
-      coverPhoto: coverPhoto !== undefined ? coverPhoto : existing.coverPhoto,
+      coverPhoto: coverPhotoUrl !== undefined ? coverPhotoUrl : existing.coverPhoto,
       estimatedTime: finalTime,
       totalDistance: finalDistance,
       difficulty: difficulty !== undefined ? difficulty : existing.difficulty,
@@ -164,8 +232,8 @@ export const updateItinerary = async (req: Request, res: Response) => {
     include: { stops: { include: { photos: true }, orderBy: { order: 'asc' } } },
   });
   res.json(updated);
-};
-
+  };
+}
 // ---------- Delete ----------
 export const deleteItinerary = async (req: Request, res: Response) => {
     const id = String(req.params.id);

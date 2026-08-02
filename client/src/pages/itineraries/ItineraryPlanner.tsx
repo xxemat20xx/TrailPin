@@ -54,6 +54,7 @@ export default function ItineraryPlanner() {
   const [saving, setSaving] = useState(false);
   const [polyline, setPolyline] = useState<any>(null);
   const [showAddStop, setShowAddStop] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (stops.length < 2) {
@@ -99,22 +100,14 @@ export default function ItineraryPlanner() {
       .catch(console.error);
   }, [id]);
 
-  async function handleSave() {
-    if (!name.trim() || stops.length === 0) {
-      alert("Please enter a title and at least one stop.");
-      return;
-    }
-    setSaving(true);
-    const payload = {
-      name,
-      description,
-      coverPhoto,
-      estimatedTime,
-      totalDistance,
-      difficulty,
-      tags,
-      visibility,
-      stops: stops.map((s, index) => ({
+async function handleSave() {
+      if (!name.trim() || stops.length === 0) {
+        alert("Please enter a title and at least one stop.");
+        return;
+      }
+      setSaving(true);
+
+      const stopsPayload = stops.map((s, index) => ({
         order: index + 1,
         name: s.name,
         latitude: s.latitude,
@@ -123,20 +116,37 @@ export default function ItineraryPlanner() {
         description: s.description,
         arrivalNotes: s.arrivalNotes,
         estimatedStay: s.estimatedStay,
-      })),
-    };
-    try {
-      if (id) {
-        await updateItinerary(id, payload);
-        navigate(`/itineraries/${id}`);
-      } else {
-        const res = await createItinerary(payload);
-        navigate(`/itineraries/${res.data.id}`);
+      }));
+
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('estimatedTime', estimatedTime);
+      formData.append('totalDistance', totalDistance?.toString() || '');
+      formData.append('difficulty', difficulty);
+      formData.append('tags', JSON.stringify(tags));
+      formData.append('visibility', visibility);
+      formData.append('stops', JSON.stringify(stopsPayload));
+
+      if (coverFile) {
+        formData.append('coverPhoto', coverFile);
       }
-    } finally {
-      setSaving(false);
-    }
+
+      try {
+        if (id) {
+          await updateItinerary(id, formData);
+          navigate(`/itineraries/${id}`);
+        } else {
+          const res = await createItinerary(formData);
+          navigate(`/itineraries/${res.data.id}`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Failed to save itinerary");
+      } finally {
+        setSaving(false);
   }
+}
 
   const center: [number, number] = useMemo(() => {
     if (!stops.length) return [14.6, 121.0];
@@ -306,6 +316,15 @@ export default function ItineraryPlanner() {
               <StopList />
             )}
           </Section>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Cover Photo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            />
+          </div>
         </div>
 
         {/* Sticky footer */}

@@ -1,11 +1,8 @@
 import {
   Search,
   MapPin,
-  Clock3,
   Users,
   Route,
-  Heart,
-  MessageCircle,
 } from "lucide-react";
 import { getPublicItineraries } from '../api/itinerary';
 import { useAuthStore } from "../stores/authStore";
@@ -13,9 +10,8 @@ import { useDestinationStore } from "../stores/destinationStore";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DestinationFormModal from '../components/destination/DestinationFormModal';
+import ItineraryCard from '../components/itinerary/ItineraryCard';
 import type { Destination } from "../api/destination";
-import DashboardCommunityCard from '../components/dashboard/DashboardCommunityCard';
-
 
 export default function Dashboard() {
   const {
@@ -33,23 +29,24 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDestinations();
     fetchUsers();
-    getPublicItineraries().then(res => setItineraries(res.data)).catch(console.error);
+    getPublicItineraries()
+      .then(res => setItineraries(res.data))
+      .catch(console.error);
   }, []);
-
-
 
   const userCount = users.length;
   const destCount = destinations.length;
 
-  const handleAddDestination = () => {
+  // Open destination form (only if logged in)
+  const openDestinationForm = (mode: 'add' | 'edit', destination?: Destination) => {
     if (!user) {
       navigate('/login?redirect=/dashboard');
       return;
     }
-    setModalMode('add');
-    setSelectedDestination(null);
+    setModalMode(mode);
+    setSelectedDestination(destination || null);
     setShowModal(true);
-  }
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen py-24">
@@ -59,20 +56,16 @@ export default function Dashboard() {
           <p className="text-orange-400 font-semibold">
             Welcome Back Rider 👋
           </p>
-
           <h1 className="text-5xl font-black mt-2">
-            Where are you riding today?
+            Discover, Plan & Share Epic Road Trips
           </h1>
-
           <p className="text-gray-300 mt-4 max-w-xl">
-            Discover beautiful motorcycle routes shared by the community and
-            start your next adventure.
+            Explore community-curated motorcycle itineraries complete with interactive map waypoints, pavement ratings, rider arrival notes, and instant .GPX exports for your GPS.
           </p>
 
           {/* Search */}
           <div className="bg-white rounded-full mt-8 flex items-center p-2 w-full">
             <Search className="text-gray-500 ml-4" />
-
             <input
               type="text"
               placeholder="Search destination..."
@@ -80,7 +73,6 @@ export default function Dashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 px-4 py-3 outline-none text-black"
             />
-
           </div>
         </div>
 
@@ -105,101 +97,51 @@ export default function Dashboard() {
           </div>
         </div>
 
-    {/* Itineraries Section */}
-      <div className="mt-12">
-        <h2 className="text-3xl font-bold mb-6">🗺️ Community Itineraries</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {itineraries.slice(0, 6).map((itin) => (
-            <div
-              key={itin.id}
-              className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden cursor-pointer"
-              onClick={() => navigate(`/itineraries/${itin.id}`)}
+        {/* ITINERARIES SECTION */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold">🗺️ Community Itineraries</h2>
+            <button
+              onClick={() => navigate('/itineraries')}
+              className="text-orange-500 font-semibold text-sm hover:underline"
             >
-              {/* Cover image or first stop photo */}
-              <img
-                src={itin.coverPhoto || itin.stops[0]?.photos[0]?.url || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200'}
-                className="h-40 w-full object-cover"
-                alt={itin.name}
-              />
-              <div className="p-4">
-                <h3 className="font-bold text-lg">{itin.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {itin.stops.length} stops · {itin.estimatedTime || '—'}
-                </p>
-                <div className="flex items-center mt-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {itin.stops[0]?.name || 'Unknown start'}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-        {/* Featured */}
-        {/* <div className="mt-12">
-          <div className="flex justify-between items-center mb-5">
-            <h2 className="text-3xl font-bold">
-              🔥 Featured Destinations
-            </h2>
-
-            <button className="text-orange-500 font-semibold">
               View All
             </button>
           </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            {destinations.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden"
-              >
-                <img
-                  src={item.image}
-                  className="h-56 w-full object-cover"
-                />
-
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold">
-                    {item.title}
-                  </h3>
-
-                  <p className="text-gray-500 mt-2">
-                    {item.description}
-                  </p>
-
-                  <div className="flex justify-between mt-6 text-sm text-gray-600">
-                    <span>📍 {item.distance}</span>
-
-                    <span>🕒 {item.duration}</span>
-                  </div>
-
-                  <button className="mt-6 w-full bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-xl font-semibold">
-                    View Itinerary
-                  </button>
-                </div>
-              </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {itineraries.slice(0, 6).map((itin) => (
+              <ItineraryCard key={itin.id} itinerary={itin} />
             ))}
           </div>
-        </div> */}
+        </div>
 
-        {/* COMMUNITY */}
-        {/* <DashboardCommunityCard
-          destinations={destinations}
-          searchQuery={searchQuery}
+        {/* Optional: small button to add a single destination */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => openDestinationForm('add')}
+            className="text-sm text-gray-500 hover:text-indigo-600 underline"
+          >
+            or add a single destination
+          </button>
+        </div>
 
-        /> */}
-
-        {/* Floating Button */}
-        <button onClick={() => navigate('/itineraries/new')}
-          className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition">
+        {/* Floating Button – goes to itinerary planner */}
+        <button
+          onClick={() => {
+            if (!user) {
+              navigate('/login?redirect=/itineraries/new');
+            } else {
+              navigate('/itineraries/new');
+            }
+          }}
+          className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-orange-400 hover:bg-orange-500 text-white text-3xl shadow-2xl transition"
+        >
           +
         </button>
-
-
       </div>
 
-      {showModal && (
+      {/* Destination form modal – only when logged in */}
+      {showModal && user && (
         <DestinationFormModal
           mode={modalMode}
           destination={selectedDestination}

@@ -3,25 +3,30 @@ import prisma from '../config/db';
 
 // Like / unlike
 export const toggleLike = async (req: Request, res: Response) => {
-    const destinationId = String(req.params.id);
+    const itineraryId = String(req.params.id);
     const userId = req.userId!;
 
     const existing = await prisma.like.findUnique({
-        where: { userId_destinationId: { userId, destinationId } },
-    });
+    where: {
+        userId_itineraryId: {
+            userId,
+            itineraryId,
+        },
+    },
+});
 
     if (existing) {
         await prisma.like.delete({ where: { id: existing.id } });
         return res.json({ liked: false });
     }
 
-    await prisma.like.create({ data: { userId, destinationId } });
+    await prisma.like.create({ data: { userId, itineraryId } });
     res.json({ liked: true });
 };
 
 // Add comment
 export const addComment = async (req: Request, res: Response) => {
-    const destinationId = String(req.params.id);
+    const itineraryId = String(req.params.id);
     const userId = req.userId!;
     const { text } = req.body;
 
@@ -30,7 +35,7 @@ export const addComment = async (req: Request, res: Response) => {
     }
 
     const comment = await prisma.comment.create({
-        data: { text, userId, destinationId },
+        data: { text, userId, itineraryId },
         include: { user: { select: { id: true, name: true, avatar: true } } },
     });
 
@@ -40,11 +45,11 @@ export const addComment = async (req: Request, res: Response) => {
 // Delete comment (owner only)
 export const deleteComment = async (req: Request, res: Response) => {
     const commentId = String(req.params.commentId);
-    const destinationId = String(req.params.id);
+    const itineraryId = String(req.params.id);
     const userId = req.userId!;
 
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });
-    if (!comment || comment.userId !== userId || comment.destinationId !== destinationId) {
+    if (!comment || comment.userId !== userId || comment.itineraryId !== itineraryId) {
         return res.status(404).json({ error: 'Comment not found' });
     }
 
@@ -53,12 +58,12 @@ export const deleteComment = async (req: Request, res: Response) => {
 };
 
 export const getComments = async (req: Request, res: Response) => {
-    const destinationId = String(req.params.id);
+    const itineraryId = String(req.params.id);
     const userId = req.userId; //softauth optional
 
     try {
         const comments = await prisma.comment.findMany({
-            where: { destinationId },
+            where: { itineraryId },
             include: {
                 user: {
                     select: { name: true, avatar: true }

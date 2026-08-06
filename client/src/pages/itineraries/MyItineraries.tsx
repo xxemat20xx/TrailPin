@@ -101,12 +101,12 @@ export default function MyItineraries() {
                       View
                     </button>
                     <div className="flex gap-2">
-                      <button
+                      {/* <button
                         onClick={() => navigate(`/itineraries/${it.id}?edit=true`)}
                         className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
                       >
                         <Pen className="w-4 h-4" />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => handleDelete(it.id, it.name)}
                         className="p-2 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50"

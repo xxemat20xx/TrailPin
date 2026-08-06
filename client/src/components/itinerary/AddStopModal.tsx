@@ -7,6 +7,7 @@ import {
   Loader2,
   Plus,
   Navigation,
+  Pencil,
 } from "lucide-react";
 
 interface Prediction {
@@ -19,16 +20,13 @@ interface Prediction {
 }
 
 interface Props {
-  onAdd: (stop: {
-    name: string;
-    latitude: number;
-    longitude: number;
-    address: string;
-  }) => void;
+  onAdd: (stop: { name: string; latitude: number; longitude: number; address: string }) => void;
+  onUpdate?: (stop: { name: string; latitude: number; longitude: number; address: string }) => void;
+  editStop?: { id: string; name: string; latitude: number; longitude: number; address: string } | null;
   onClose: () => void;
 }
 
-export default function AddStopModal({ onAdd, onClose }: Props) {
+export default function AddStopModal({ onAdd, onUpdate, editStop, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -41,6 +39,17 @@ export default function AddStopModal({ onAdd, onClose }: Props) {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Pre‑fill when editing
+  useEffect(() => {
+    if (editStop) {
+      setName(editStop.name);
+      setAddress(editStop.address);
+      setLatitude(editStop.latitude);
+      setLongitude(editStop.longitude);
+      setQuery(editStop.address || ""); // optional: triggers search suggestions
+    }
+  }, [editStop]);
 
   useEffect(() => {
     if (query.trim().length < 3) {
@@ -106,13 +115,19 @@ export default function AddStopModal({ onAdd, onClose }: Props) {
     }
   }
 
-  function handleAdd() {
+  function handleSubmit() {
     if (!name || latitude == null || longitude == null) return;
-    onAdd({ name, address, latitude, longitude });
+    const stopData = { name, address, latitude, longitude };
+    if (editStop && onUpdate) {
+      onUpdate(stopData);
+    } else {
+      onAdd(stopData);
+    }
     onClose();
   }
 
   const isValid = name && latitude != null && longitude != null;
+  const isEditing = !!editStop;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-neutral-950/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
@@ -121,14 +136,14 @@ export default function AddStopModal({ onAdd, onClose }: Props) {
         <div className="flex items-start justify-between border-b border-neutral-100 px-6 pb-5 pt-6">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white">
-              <Navigation className="h-5 w-5" strokeWidth={2.2} />
+              {isEditing ? <Pencil className="h-5 w-5" /> : <Navigation className="h-5 w-5" strokeWidth={2.2} />}
             </div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight text-neutral-900">
-                Add a stop
+                {isEditing ? "Edit stop" : "Add a stop"}
               </h2>
               <p className="mt-0.5 text-sm text-neutral-500">
-                Search a destination or enter details manually.
+                {isEditing ? "Update the stop details." : "Search a destination or enter details manually."}
               </p>
             </div>
           </div>
@@ -218,22 +233,24 @@ export default function AddStopModal({ onAdd, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <Field label="Latitude">
                 <input
+                  disabled
                   value={latitude ?? ""}
                   onChange={(e) =>
                     setLatitude(parseFloat(e.target.value) || null)
                   }
                   placeholder="0.0000"
-                  className={inputCls}
+                  className="*:w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3.5 py-2.5 text-sm text-neutral-500 placeholder:text-neutral-400 outline-none"
                 />
               </Field>
               <Field label="Longitude">
                 <input
+                  disabled
                   value={longitude ?? ""}
                   onChange={(e) =>
                     setLongitude(parseFloat(e.target.value) || null)
                   }
                   placeholder="0.0000"
-                  className={inputCls}
+                  className="*:w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3.5 py-2.5 text-sm text-neutral-500 placeholder:text-neutral-400 outline-none"
                 />
               </Field>
             </div>
@@ -249,12 +266,21 @@ export default function AddStopModal({ onAdd, onClose }: Props) {
             Cancel
           </button>
           <button
-            onClick={handleAdd}
+            onClick={handleSubmit}
             disabled={!isValid}
             className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-500"
           >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            Add stop
+            {isEditing ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Update stop
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                Add stop
+              </>
+            )}
           </button>
         </div>
       </div>

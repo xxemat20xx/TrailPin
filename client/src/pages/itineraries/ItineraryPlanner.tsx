@@ -61,6 +61,7 @@ export default function ItineraryPlanner() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
   const [formError, setFormError] = useState("");
+  const [editingStop, setEditingStop] = useState<any | null>(null);
 
   useEffect(() => {
     const loadItinerary = async () => {
@@ -162,6 +163,10 @@ export default function ItineraryPlanner() {
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
     setFormError("");
+  };
+  const handleEditStop = (stop: any) => {
+  setEditingStop(stop);
+  setShowAddStop(true);
   };
 
   const removeCover = () => {
@@ -343,32 +348,13 @@ export default function ItineraryPlanner() {
                 Add
               </button>
             </div>
-
+             
             <div className="mt-4 min-w-0 flex-1 overflow-y-auto pr-1 text-sm text-[#242222] xl:min-h-0 xl:text-[0.95rem]">
-              {stops.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => setShowAddStop(true)}
-                  className="flex w-full items-center gap-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-left transition hover:border-orange-300 hover:bg-orange-50 sm:px-5 sm:py-7"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-orange-500 shadow-sm">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-black xl:text-base">
-                      Add your first destination
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500 xl:text-sm">
-                      Search for a place to begin your route.
-                    </p>
-                  </div>
-                </button>
-              ) : (
-                <StopList />
-              )}
+         
+              <StopList onEditStop={handleEditStop} />
             </div>
           </PlannerCard>
-
+              
           <section className="order-1 flex min-w-0 flex-col overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-xl shadow-gray-200/40 lg:order-2 lg:col-span-2 xl:col-span-1">
             <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-gray-100 px-4 py-4 sm:px-5">
               <div className="flex min-w-0 items-center gap-3">
@@ -592,15 +578,29 @@ export default function ItineraryPlanner() {
       </div>
 
       {showAddStop && (
-        <AddStopModal
-          onClose={() => setShowAddStop(false)}
-          onAdd={(stop) => {
-            addStop(stop);
-            setShowAddStop(false);
-            setFormError("");
-          }}
-        />
-      )}
+          <AddStopModal
+            onClose={() => {
+              setShowAddStop(false);
+              setEditingStop(null);
+            }}
+            onAdd={(stop) => {
+              addStop(stop);
+              setShowAddStop(false);
+              setFormError("");
+            }}
+            onUpdate={(updatedStop) => {
+              if (editingStop) {
+                useItineraryStore.getState().reorderStops(
+                  stops.map(s => s.id === editingStop.id ? { ...s, ...updatedStop } : s)
+                );
+              }
+              setShowAddStop(false);
+              setEditingStop(null);
+            }}
+            editStop={editingStop}
+          />
+        )}
+      
     </div>
   );
 }

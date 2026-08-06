@@ -15,6 +15,8 @@ import ItineraryDetail from "./pages/itineraries/ItineraryDetails";
 import ProfilePage from "./pages/profile/ProfilePage";
 import MyItineraries from './pages/itineraries/MyItineraries';
 
+import Forum from './pages/forum/Forum';
+
 function App() {
   const { checkAuth } = useAuthStore();
 
@@ -37,6 +39,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-itineraries" element={<MyItineraries />} />
+        <Route path="/forum" element={<Forum />} />
       </Route>
     </Routes>
   );

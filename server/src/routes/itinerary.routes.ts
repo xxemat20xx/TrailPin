@@ -123,7 +123,25 @@ publicItineraryRouter.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch itinerary' });
   }
 });
-
+// In publicItineraryRouter (in itinerary.routes.ts)
+publicItineraryRouter.get('/:id/comments', async (req, res) => {
+  const itineraryId = String(req.params.id);
+  const userId = req.userId;
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { itineraryId },
+      include: { user: { select: { id: true, name: true, avatar: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const result = comments.map(c => ({
+      ...c,
+      canDelete: userId ? c.userId === userId : false,
+    }));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
 
 
 export default router;

@@ -10,7 +10,11 @@ import {
     uploadStopPhoto
 } from '../controllers/itinerary.controller';
 import { softAuth } from '../middleware/softAuth';
-import { toggleItineraryLike } from '../controllers/interaction.controller';
+import { toggleItineraryLike,
+          addComment,
+          deleteComment,
+          getComments
+ } from '../controllers/interaction.controller';
 import prisma from '../config/db';
 import multer from 'multer';
 
@@ -27,6 +31,11 @@ router.get('/:id', getItinerary);
 router.put('/:id', upload.single('coverPhoto'), updateItinerary);
 router.delete('/:id', deleteItinerary);
 router.post('/calculate-route', calculateRoute);
+
+// interaction routes (like/unlike, comments) are handled in interaction.routes.ts
+router.post('/:id/comments', addComment);
+router.delete('/:id/comments/:commentId', deleteComment);
+router.get('/:id/comments', getComments);
 
 
 // interaction routes (like/unlike, comments) are handled in interaction.routes.ts

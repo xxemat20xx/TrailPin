@@ -10,6 +10,7 @@ import {
   Plus,
   Menu,
   X,
+  Flame,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -97,7 +98,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8">
 
           <Link
-            to="/explore"
+            to="/"
             className="
             flex items-center gap-2
             text-gray-300
@@ -107,6 +108,19 @@ export default function Navbar() {
           >
             <Compass size={18}/>
             Explore
+          </Link>
+
+          <Link
+            to="/forum"
+            className="
+            flex items-center gap-2
+            text-gray-300
+            hover:text-white
+            transition
+            "
+          >
+            <Flame size={18}/>
+            Rider Forum
           </Link>
 
 

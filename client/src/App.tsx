@@ -30,9 +30,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/itineraries/:id" element={<ItineraryDetail />} />
       <Route path="/itineraries/new" element={<ItineraryPlanner />} />
-
+      
       {/* Pages WITH navbar */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Dashboard />} />
@@ -40,6 +39,9 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/my-itineraries" element={<MyItineraries />} />
         <Route path="/forum" element={<Forum />} />
+        <Route path="/itineraries/:id" element={<ItineraryDetail />} />
+     
+
       </Route>
     </Routes>
   );

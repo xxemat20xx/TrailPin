@@ -1,12 +1,12 @@
 import { useState } from "react";
 import type { Destination } from "../../api/destination";
-import InteractionBar from "../interactions/InteractionBar";
+
 import StarRating from "../interactions/starRating";
 import DestinationFormModal from "../destination/DestinationFormModal";
 import { useAuthStore } from "../../stores/authStore";
 import { useDestinationStore } from "../../stores/destinationStore";
 import { Pen, Trash2 } from "lucide-react";
-import CommentModal from '../comments/CommentModal';
+
 
 interface Props {
     destinations: Destination[];
@@ -24,13 +24,12 @@ export default function DashboardCommunityCard({
     const { user } = useAuthStore();
     const { removeDestination } = useDestinationStore();
 
-    const [commentDestId, setCommentDestId] = useState<string | null>(null);
+
     const [editDestination, setEditDestination] = useState<Destination | null>(
         null
     );
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [commentModalDest, setCommentModalDest] = useState<Destination | null>(null);
-
+  
     const handleDelete = async (id: string) => {
         if (!user) return;
         try {
@@ -89,24 +88,9 @@ export default function DashboardCommunityCard({
                                     </em>
                                 </p>
 
-                                {/* Interaction bar (likes / comments) */}
-                                <InteractionBar
-                                    destinationId={ride.id}
-                                    initialLiked={ride.userLiked ?? false}
-                                    initialLikeCount={ride.likeCount}
-                                    commentCount={ride.commentCount}
-                                    onCommentClick={() => setCommentModalDest(ride)}
-                                />
+                            
 
-                                {/* Comment section placeholder */}
-                                {commentModalDest && (
-                                    <CommentModal
-                                        destinationId={commentModalDest.id}
-                                        destinationName={commentModalDest.name}
-                                        destinationImage={getImageUrl(commentModalDest)}
-                                        onClose={() => setCommentModalDest(null)}
-                                    />
-                                )}
+                           
                                 <button className="mt-8 bg-orange-400 hover:bg-orange-500 text-white px-8 py-3 rounded-xl font-semibold transition">
                                     View Full Route
                                 </button>

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { getAllUsers, getMe, logoutUser } from '../api/auth';
-import { useDestinationStore } from './destinationStore';
 
 interface User {
     id: string;
@@ -35,8 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         await logoutUser();
         set({ user: null });
 
-        // refresh destination to remove personalized field
-        useDestinationStore.getState().fetchDestinations();
+       
     },
     fetchUsers: async () => {
         try {

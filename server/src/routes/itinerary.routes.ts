@@ -151,6 +151,44 @@ publicItineraryRouter.get('/:id/comments', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch comments' });
   }
 });
-
-
+// public for stop photos
+publicItineraryRouter.get('/photos/stops', async(_req, res) => {
+  try{
+    const photos = await prisma.stopPhoto.findMany({
+      include: {
+        stop: {
+          select: {
+            id: true,
+            name: true,
+            itinerary: {
+              select: {
+                id: true,
+                name: true,
+                user: { select: { id: true, name: true, avatar: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20, // limit for performance
+    });
+      const result = photos.map(photo => ({
+      id: photo.id,
+      url: photo.url,
+      caption: photo.caption,
+      createdAt: photo.createdAt,
+      stopId: photo.stop.id,
+      stopName: photo.stop.name,
+      itineraryId: photo.stop.itinerary.id,
+      itineraryName: photo.stop.itinerary.name,
+      user: photo.stop.itinerary.user,
+    }));
+    res.json(result);
+  }
+  catch(err){
+    res.status(500).json({ error: 'Failed to fetch stop photos'
+    })
+  }
+})
 export default router;

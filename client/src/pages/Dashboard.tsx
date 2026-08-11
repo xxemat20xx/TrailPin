@@ -9,13 +9,12 @@ import {
   Plus,
   ArrowRight,
   Compass,
-  SlidersHorizontal,
   X,
   Sparkles,
 } from "lucide-react";
-import { getPublicItineraries } from "../api/itinerary";
+import { getPublicItineraries } from "../api/publicDestinations";
 import { useAuthStore } from "../stores/authStore";
-import { useDestinationStore } from "../stores/destinationStore";
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ItineraryCard from "../components/itinerary/ItineraryCard";
@@ -23,7 +22,7 @@ import ItineraryCard from "../components/itinerary/ItineraryCard";
 type SortOption = "trending" | "top" | "newest";
 
 export default function Dashboard() {
-  const { destinations, fetchDestinations } = useDestinationStore();
+
   const { fetchUsers, users, user } = useAuthStore();
 
   const navigate = useNavigate();
@@ -40,7 +39,7 @@ export default function Dashboard() {
 
       try {
         await Promise.all([
-          fetchDestinations(),
+  
           fetchUsers(),
           getPublicItineraries().then((res) => {
             setItineraries(res.data || []);
@@ -54,7 +53,7 @@ export default function Dashboard() {
     };
 
     loadDashboardData();
-  }, [fetchDestinations, fetchUsers]);
+  }, [ fetchUsers]);
 
   const filteredItineraries = useMemo(() => {
     return itineraries
@@ -115,12 +114,6 @@ export default function Dashboard() {
       value: users.length,
       icon: Users,
       description: "Exploring together",
-    },
-    {
-      label: "Destinations",
-      value: destinations.length,
-      icon: MapPin,
-      description: "Places to discover",
     },
     {
       label: "Routes Shared",
@@ -260,15 +253,7 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl bg-white/10 p-4">
-                    <p className="text-2xl font-black text-white">
-                      {destinations.length}
-                    </p>
 
-                    <p className="mt-1 text-xs text-gray-400">
-                      Destinations
-                    </p>
-                  </div>
                 </div>
 
                 <button

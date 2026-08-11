@@ -25,9 +25,7 @@ export const deleteItinerary = (id: string) => apiClient.delete(`/itineraries/${
 export const calculateRoute = (coordinates: { lat: number; lng: number }[]) =>
   apiClient.post('/itineraries/calculate-route', { coordinates });
 
-export const getPublicItineraries = () => apiClient.get('/public/itineraries');
-export const getPublicItinerary = (id: string) =>
-  apiClient.get(`/public/itineraries/${id}`);
+
 
 export const likeItinerary = (id: string) => apiClient.post(`/itineraries/${id}/like`);
 
@@ -44,3 +42,4 @@ export const addComment = (itineraryId: string, text: string) =>
 
 export const deleteComment = (itineraryId: string, commentId: string) =>
   apiClient.delete(`/itineraries/${itineraryId}/comments/${commentId}`);
+

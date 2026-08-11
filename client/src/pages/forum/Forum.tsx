@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPublicItineraries } from '../../api/itinerary';
+import { getPublicItineraries } from '../../api/publicDestinations';
 import ForumCard from '../../components/forum/ForumCard';
 import { Compass } from 'lucide-react';
 

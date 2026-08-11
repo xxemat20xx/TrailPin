@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   calculateRoute,
-  getPublicItinerary,
   uploadStopPhoto,
 } from "../../api/itinerary";
+import { getPublicItinerary } from "../../api/publicDestinations";
 import { useAuthStore } from "../../stores/authStore";
 import MapView from "../../components/MapView";
 

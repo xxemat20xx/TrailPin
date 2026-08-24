@@ -191,4 +191,5 @@ publicItineraryRouter.get('/photos/stops', async(_req, res) => {
     })
   }
 })
+
 export default router;

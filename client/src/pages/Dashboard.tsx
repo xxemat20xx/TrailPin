@@ -11,6 +11,7 @@ import {
   Compass,
   X,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import { getPublicItineraries } from "../api/publicDestinations";
 import { useAuthStore } from "../stores/authStore";
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState<SortOption>("trending");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
+  const [totalLikes, setTotalLikes] = useState(0);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -44,6 +46,11 @@ export default function Dashboard() {
           getPublicItineraries().then((res) => {
             setItineraries(res.data || []);
           }),
+          fetch("/api/public/stats")
+            .then((res) => res.json())
+            .then((data) => {
+              setTotalLikes(data.totalLikes || 0);
+            }),
         ]);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
@@ -120,6 +127,12 @@ export default function Dashboard() {
       value: itineraries.length,
       icon: Route,
       description: "Community adventures",
+    },
+    {
+      label: "Total Likes",
+      value: totalLikes,
+      icon: Heart,
+      description: "Appreciation for rides",
     },
   ];
 

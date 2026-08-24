@@ -535,6 +535,19 @@ export default function ItineraryPlanner() {
                   />
                 </div>
               </div>
+              <div>
+                <SmallLabel>Difficulty</SmallLabel>
+                <select
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className={compactInput}
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
             </PlannerCard>
 
             <PlannerCard className="min-w-0 lg:col-span-2 xl:col-span-1">
@@ -557,6 +570,18 @@ export default function ItineraryPlanner() {
                 </p>
               </div>
             </PlannerCard>
+            <div>
+              <SmallLabel>Visibility</SmallLabel>
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value as any)}
+                className={compactInput}
+              >
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+              </select>
+            </div>
           </div>
         </div>
       </main>

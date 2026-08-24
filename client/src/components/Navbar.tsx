@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Flame,
+  Camera
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -123,6 +124,7 @@ export default function Navbar() {
             Rider Forum
           </Link>
 
+ 
 
           {user && (
             <>
@@ -150,9 +152,21 @@ export default function Navbar() {
               >
                 My Itineraries
               </Link>
+  
             </>
           )}
-
+            <Link
+                to="/stop-photos"
+                className="
+                flex items-center gap-2
+                text-gray-300
+                hover:text-white
+                transition
+                "
+              >
+                <Camera size={18}/>
+                Stop Photos
+              </Link>
         </div>
 
 

@@ -11,8 +11,7 @@ import {
   Bookmark,
   Share2,
   MapPin,
-  Route,
-  MoreHorizontal,
+
 } from "lucide-react";
 
 import confetti from "canvas-confetti";
@@ -535,19 +534,7 @@ export default function ItineraryCard({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-
-              // Reserved for future
-              // menu actions.
-            }}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-300 transition hover:bg-gray-100 hover:text-gray-500"
-            title="More options"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+      
         </div>
 
         {/* ==================================================
@@ -669,22 +656,6 @@ export default function ItineraryCard({
           {/* Right actions */}
 
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={
-                handleComments
-              }
-              className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500"
-              title="Comments"
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-
-              <span className="text-[10px] font-bold">
-                {itinerary.commentCount ??
-                  0}
-              </span>
-            </button>
-
             <button
               type="button"
               onClick={

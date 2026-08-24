@@ -634,7 +634,7 @@ export default function ItineraryDetail() {
             <div className="mb-8">
               <div className="flex items-center gap-2">
                 <div className="h-7 w-1 rounded-full bg-orange-400" />
-
+                
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-500">
                   Follow the journey
                 </p>
@@ -643,7 +643,15 @@ export default function ItineraryDetail() {
               <h2 className="mt-3 text-3xl font-black tracking-tight text-[#242222]">
                 Route stops
               </h2>
-
+                          {isOwner && (
+                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                  itinerary.visibility === 'private' ? 'bg-red-100 text-red-700' :
+                  itinerary.visibility === 'unlisted' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-green-100 text-green-700'
+                }`}>
+                  {itinerary.visibility}
+                </span>
+              )}
               <p className="mt-2 text-sm leading-6 text-gray-500">
                 Explore every destination included in this
                 itinerary.
@@ -900,6 +908,8 @@ export default function ItineraryDetail() {
 
               <ChevronRight className="h-4 w-4" />
             </button>
+
+
           </section>
         </main>
       </div>

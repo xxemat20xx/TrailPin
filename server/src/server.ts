@@ -9,7 +9,7 @@ import authRoutes from './routes/auth.routes';
 import placesRoutes from './routes/places.routes';
 import cloudinary from './config/cloudinary';   // now env is loaded
 import { router as itineraryRoutes, publicItineraryRouter as publicItineraryRoutes } from './routes/itinerary.routes';
-
+import publicStatsRoutes from './routes/publicStats.routes';
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/places', placesRoutes);
 app.use('/api/itineraries', itineraryRoutes);
-
+app.use('/api/public/stats', publicStatsRoutes);
 
 app.use('/api/public/itineraries', publicItineraryRoutes);
 // Health check

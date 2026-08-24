@@ -20,8 +20,6 @@ import {
     getRatings,
 } from '../controllers/rating.controller';
 import { upload } from '../middleware/upload';
-import prisma from '../config/db';
-import { softAuth } from '../middleware/softAuth';
 
 export const router = Router();
 

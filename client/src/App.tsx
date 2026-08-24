@@ -16,6 +16,7 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import MyItineraries from './pages/itineraries/MyItineraries';
 
 import Forum from './pages/forum/Forum';
+import StopPhotos from './pages/StopPhotos';
 
 function App() {
   const { checkAuth } = useAuthStore();
@@ -40,8 +41,9 @@ function App() {
         <Route path="/my-itineraries" element={<MyItineraries />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/itineraries/:id" element={<ItineraryDetail />} />
-     
+        <Route path="/stop-photos" element={<StopPhotos />} />
 
+        <Route path="*" element={<div className="min-h-screen bg-gray-50 py-24 text-center"><p className="text-gray-500">404 - Page Not Found</p></div>} />
       </Route>
     </Routes>
   );

@@ -90,7 +90,15 @@ publicItineraryRouter.get('/:id', async (req, res) => {
 
   try {
     const itinerary = await prisma.itinerary.findFirst({
-      where: { id, visibility: 'public' },   // only public itineraries
+      where: {
+        id,
+        OR: [
+          { visibility: 'public' },
+          { visibility: 'unlisted' },
+          // Allow owner to see their own private itinerary
+          { AND: [ { visibility: 'private' }, { userId: userId || '' } ] },
+        ],
+      },
       include: {
         stops: { include: { photos: true }, orderBy: { order: 'asc' } },
         user: { select: { id: true, name: true, avatar: true } },

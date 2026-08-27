@@ -17,6 +17,10 @@ interface Prediction {
     main_text: string;
     secondary_text: string;
   };
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface Props {
@@ -95,25 +99,16 @@ export default function AddStopModal({ onAdd, onUpdate, editStop, onClose }: Pro
     return () => document.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  async function selectSuggestion(prediction: Prediction) {
-    setShowSuggestions(false);
-    setQuery(prediction.description);
-    setIsSearching(true);
-    try {
-      const res = await fetch(
-        `/api/places/details?place_id=${prediction.place_id}`
-      );
-      const place = await res.json();
-      setName(
-        place.name ?? prediction.structured_formatting?.main_text ?? ""
-      );
-      setAddress(place.address);
-      setLatitude(place.latitude);
-      setLongitude(place.longitude);
-    } finally {
-      setIsSearching(false);
-    }
-  }
+ function selectSuggestion(prediction: Prediction) {
+  setShowSuggestions(false);
+  setQuery(prediction.description);
+  
+  // Use the pre‑filled data from the autocomplete response
+  setName(prediction.name || prediction.structured_formatting?.main_text || "");
+  setAddress(prediction.address || "");
+  setLatitude(prediction.latitude ?? null);
+  setLongitude(prediction.longitude ?? null);
+}
 
   function handleSubmit() {
     if (!name || latitude == null || longitude == null) return;
@@ -130,7 +125,7 @@ export default function AddStopModal({ onAdd, onUpdate, editStop, onClose }: Pro
   const isEditing = !!editStop;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-neutral-950/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-neutral-950/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
       <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-[0_20px_70px_-10px_rgba(0,0,0,0.3)] ring-1 ring-neutral-200 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-neutral-100 px-6 pb-5 pt-6">

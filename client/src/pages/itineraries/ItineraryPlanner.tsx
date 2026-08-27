@@ -27,9 +27,10 @@ import {
   Users,
   X,
 } from "lucide-react";
-
+import { useSearchParams } from 'react-router-dom';
 export default function ItineraryPlanner() {
-  const { id } = useParams<{ id: string }>();
+ const [searchParams] = useSearchParams();
+ const id = searchParams.get('edit') || undefined;
   const navigate = useNavigate();
 
   const {

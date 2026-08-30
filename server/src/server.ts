@@ -10,6 +10,7 @@ import placesRoutes from './routes/places.routes';
 import cloudinary from './config/cloudinary';   // now env is loaded
 import { router as itineraryRoutes, publicItineraryRouter as publicItineraryRoutes } from './routes/itinerary.routes';
 import publicStatsRoutes from './routes/publicStats.routes';
+import profileRoutes from './routes/profile.routes';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/itineraries', itineraryRoutes);
 app.use('/api/public/stats', publicStatsRoutes);
+app.use('/api/profile', profileRoutes);
 
 app.use('/api/public/itineraries', publicItineraryRoutes);
 // Health check

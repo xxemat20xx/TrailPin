@@ -265,7 +265,7 @@ export default function ItineraryCard({
   // ==========================================================
 
   const authorName =
-    itinerary.user?.name ||
+    itinerary.user?.name || itinerary.user?.username ||
     "Unknown Rider";
 
   const authorAvatar =
@@ -301,7 +301,9 @@ export default function ItineraryCard({
   // ==========================================================
   // RENDER
   // ==========================================================
-
+   
+  const username = itinerary.user?.username || itinerary.user?.name || "Unknown Rider";
+   
   return (
     <article
       onClick={() =>
@@ -523,7 +525,7 @@ export default function ItineraryCard({
 
             <div className="min-w-0">
               <p className="truncate text-[11px] font-bold text-gray-700">
-                {authorName}
+                 <span className="font-semibold text-gray-500">Shared by</span> <strong className="text-amber-500 tracking-wide">{username}</strong>
               </p>
 
               {formattedDate && (

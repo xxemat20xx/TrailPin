@@ -50,7 +50,7 @@ publicItineraryRouter.get('/', async (req, res) => {
       where: { visibility: 'public' },
       include: {
         stops: { include: { photos: true }, orderBy: { order: 'asc' } },
-        user: { select: { id: true, name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true, username: true } },
         _count: { select: { likes: true, comments: true, ratings: true } },
         ...(userId
           ? {
@@ -101,7 +101,7 @@ publicItineraryRouter.get('/:id', async (req, res) => {
       },
       include: {
         stops: { include: { photos: true }, orderBy: { order: 'asc' } },
-        user: { select: { id: true, name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true, username: true } },
         _count: { select: { likes: true, comments: true, ratings: true } },
         ...(userId
           ? {
@@ -147,7 +147,7 @@ publicItineraryRouter.get('/:id/comments', async (req, res) => {
   try {
     const comments = await prisma.comment.findMany({
       where: { itineraryId },
-      include: { user: { select: { id: true, name: true, avatar: true } } },
+      include: { user: { select: { id: true, name: true, avatar: true, username: true } } },
       orderBy: { createdAt: 'desc' },
     });
     const result = comments.map(c => ({
@@ -172,7 +172,7 @@ publicItineraryRouter.get('/photos/stops', async(_req, res) => {
               select: {
                 id: true,
                 name: true,
-                user: { select: { id: true, name: true, avatar: true } },
+                user: { select: { id: true, name: true, avatar: true, username: true } },
               },
             },
           },

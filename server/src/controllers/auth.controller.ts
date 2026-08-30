@@ -12,7 +12,7 @@ import jwt from 'jsonwebtoken'
 
 // ---------- Email/Password Registration ----------
 export const register = async (req: Request, res: Response) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, username } = req.body;
 
     if (!name || !email || !password) {
         return res.status(400).json({
@@ -40,7 +40,7 @@ export const register = async (req: Request, res: Response) => {
                 email,
                 password: hashedPassword,
                 isVerified: false,
-
+                username: username || null
             }
         })
 
@@ -158,7 +158,6 @@ export const googleCallback = async (req: Request, res: Response) => {
                 googleId: googleUser.id,
                 name: googleUser.name,
                 avatar: googleUser.picture,
-                // If they already had a password account, Google OAuth should mark them validated
                 isVerified: true,
             },
             create: {
@@ -166,6 +165,7 @@ export const googleCallback = async (req: Request, res: Response) => {
                 googleId: googleUser.id,
                 name: googleUser.name,
                 avatar: googleUser.picture,
+                username: googleUser.email.split('@')[0], // Default username from email
                 isVerified: true, // Google already verifies email ownership
             },
         });

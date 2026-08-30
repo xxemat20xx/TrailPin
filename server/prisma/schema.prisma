@@ -9,6 +9,7 @@ datasource db {
 model User {
   id         String     @id @default(uuid())
   email      String     @unique
+  username   String?     @unique
   name       String?
   password   String?    // null for Google OAuth
   avatar     String?
